@@ -22,7 +22,7 @@ __build__ = ""
 __date__ = "2025-11-17"
 
 # Version description
-__description__ = "A modern PySide6-based graphical user interface for OpenPGP with enhanced encryption, key management, and security features."
+__description__ = "A modern graphical user interface for remote control with enhanced encryption and security features"
 
 # Dependencies
 __requires__ = [

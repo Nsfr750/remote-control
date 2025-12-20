@@ -1,17 +1,15 @@
 """
-Help Dialog for OpenPGP Application
-
-This module provides a help dialog for the OpenPGP application.
-It includes documentation and usage instructions for the application.
+Help Dialog for remote control app
 """
 
-from PyQT6.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTextBrowser, 
     QPushButton, QWidget, QFrame, QLabel, QTabWidget,
-    QApplication, QScrollArea, QSizePolicy, QMessageBox
+    QApplication, QScrollArea, QSizePolicy, QMessageBox,
+    QDialogButtonBox
 )
-from PyQT6.QtCore import Qt, QUrl, QSize
-from PyQT6.QtGui import QDesktopServices, QFont, QTextCursor, QPixmap, QIcon
+from PyQt6.QtCore import Qt, QUrl, QSize
+from PyQt6.QtGui import QDesktopServices, QFont, QTextCursor, QPixmap, QIcon
 
 import os
 import sys
@@ -20,15 +18,20 @@ import logging
 
 # Get version information
 try:
-    from .version import get_version
+    from version import get_version
     VERSION = get_version()
 except ImportError:
-    VERSION = "2.2.0"
+    VERSION = "1.0.0"
 
-logger = logging.getLogger('OpenPGP')
+def show_help_dialog(parent=None):
+    """Show the help dialog."""
+    dialog = HelpDialog(parent)
+    dialog.exec()
+
+logger = logging.getLogger('RemoteControl')
 
 class HelpDialog(QDialog):
-    """Help dialog for the OpenPGP application."""
+    """Help dialog for the application."""
     
     def __init__(self, parent=None):
         """Initialize the help dialog."""
@@ -102,12 +105,12 @@ class HelpDialog(QDialog):
         
         # Welcome message
         welcome_text = """
-        <h2>Welcome to OpenPGP</h2>
-        <p>Thank you for using OpenPGP, a secure and easy-to-use application for PGP encryption, 
-        decryption, and key management with advanced security features.</p>
+        <h2>Welcome to Remote Control</h2>
+        <p>Thank you for using Remote Control, a secure and easy-to-use application for remote desktop control, 
+        screen sharing, and file transfer with advanced security features.</p>
         
-        <h3>What's New in 2.2.0</h3>
-        <h4>🔌 SIEM Integration</h4>
+        <h3>What's New in 1.0.0</h3>
+        <h4>🚀 Initial Release</h4>
         <ul>
             <li><b>Real-time Monitoring</b>: Connect to Security Information and Event Management systems</li>
             <li><b>Centralized Logging</b>: Send security events to your SIEM for analysis</li>
@@ -153,149 +156,7 @@ class HelpDialog(QDialog):
         
         layout.addWidget(text_browser)
         return widget
-    
-    def _create_encryption_tab(self):
-        """Create the encryption tab."""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        
-        text = """
-        <h2>Encrypting Files and Messages</h2>
-        
-        <h3>Encrypting Files</h3>
-        <ol>
-            <li>Click on the 'Encrypt' tab in the main window</li>
-            <li>Select the file you want to encrypt</li>
-            <li>Choose the recipient's public key</li>
-            <li>Click 'Encrypt' and save the encrypted file</li>
-        </ol>
-        
-        <h3>Encrypting Text</h3>
-        <ol>
-            <li>Go to the 'Encrypt' tab</li>
-            <li>Type or paste your message in the text area</li>
-            <li>Select the recipient's public key</li>
-            <li>Click 'Encrypt' and copy the encrypted message</li>
-        </ol>
-        
-        <h3>Options</h3>
-        <ul>
-            <li><b>Sign Message:</b> Add your digital signature to verify your identity</li>
-            <li><b>ASCII Armor:</b> Output in ASCII format for email compatibility</li>
-            <li><b>Compress:</b> Reduce the size of the encrypted output</li>
-        </ul>
-        """
-        
-        text_browser = QTextBrowser()
-        text_browser.setOpenExternalLinks(True)
-        text_browser.setHtml(text)
-        
-        layout.addWidget(text_browser)
-        return widget
-    
-    def _create_decryption_tab(self):
-        """Create the decryption tab."""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        
-        text = """
-        <h2>Decrypting Files and Messages</h2>
-        
-        <h3>Decrypting Files</h3>
-        <ol>
-            <li>Click on the 'Decrypt' tab in the main window</li>
-            <li>Select the encrypted file (.gpg, .asc, etc.)</li>
-            <li>Enter your private key passphrase if prompted</li>
-            <li>Click 'Decrypt' and choose where to save the decrypted file</li>
-        </ol>
-        
-        <h3>Decrypting Text</h3>
-        <ol>
-            <li>Go to the 'Decrypt' tab</li>
-            <li>Paste the encrypted message in the text area</li>
-            <li>Enter your private key passphrase if prompted</li>
-            <li>Click 'Decrypt' to view the decrypted message</li>
-        </ol>
-        
-        <h3>Verifying Signatures</h3>
-        <p>When a message is signed, the application will automatically verify the signature 
-        and show you the result. Make sure you have the sender's public key in your keyring 
-        to verify their signature.</p>
-        """
-        
-        text_browser = QTextBrowser()
-        text_browser.setOpenExternalLinks(True)
-        text_browser.setHtml(text)
-        
-        layout.addWidget(text_browser)
-        return widget
-    
-    def _create_keys_tab(self):
-        """Create the key management tab."""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        
-        text = """
-        <h2>Key Management</h2>
-        
-        <h3>Generating a New Key Pair</h3>
-        <ol>
-            <li>Go to the 'PGP Tools' tab</li>
-            <li>Click 'Generate New Key'</li>
-            <li>Select key type (RSA, ECC, or Ed25519)</li>
-            <li>Enter your name and email address</li>
-            <li>Choose a strong passphrase (use the strength meter as a guide)</li>
-            <li>For hardware tokens, select 'Use Hardware Token' and follow the prompts</li>
-            <li>Click 'Generate' and wait for the process to complete</li>
-        </ol>
-        
-        <h3>Key Types</h3>
-        <ul>
-            <li><b>RSA</b>: Compatible with most PGP implementations</li>
-            <li><b>ECC</b>: More efficient than RSA with similar security</li>
-            <li><b>Ed25519</b>: Modern, high-security elliptic curve algorithm</li>
-        </ul>
-        
-        <h3>Hardware Token Support</h3>
-        <p>OpenPGP supports hardware security keys like YubiKey for storing your private keys securely.
-        To use a hardware token:</p>
-        <ol>
-            <li>Insert your hardware token</li>
-            <li>Select 'Use Hardware Token' when generating a new key</li>
-            <li>Follow the on-screen instructions to set up your token</li>
-            <li>Your private key will be stored securely on the token</li>
-        </ol>
-        
-        <h3>Importing Keys</h3>
-        <p>You can import public keys by:</p>
-        <ul>
-            <li>Clicking 'Import' and selecting a key file</li>
-            <li>Pasting the key directly into the text area</li>
-            <li>Dropping a key file into the application window</li>
-        </ul>
-        <p>Always verify the fingerprint of any key before importing it.</p>
-        
-        <h3>Exporting Keys</h3>
-        <p>You can export your public key to share with others or back up your private key. 
-        Keep your private key secure and never share it. For hardware tokens, the private key 
-        cannot be exported - only the public key can be shared.</p>
-        
-        <h3>Key Backup and Recovery</h3>
-        <p>Use the 'Backup Key' feature to create a secure backup of your key pair. 
-        You can back up to a file or print a paper copy. Store backups in a secure location.</p>
-        
-        <h3>Key Trust and Verification</h3>
-        <p>Always verify the fingerprint of any key before trusting it. 
-        You can sign other people's keys to indicate that you trust they are who they claim to be.</p>
-        """
-        
-        text_browser = QTextBrowser()
-        text_browser.setOpenExternalLinks(True)
-        text_browser.setHtml(text)
-        
-        layout.addWidget(text_browser)
-        return widget
-    
+      
     def _create_security_tab(self):
         """Create the security features tab."""
         widget = QWidget()
@@ -399,8 +260,8 @@ class HelpDialog(QDialog):
         
         about_text = f"""
         <div style="text-align: center;">
-            <h2>OpenPGP v{VERSION}</h2>
-            <p>A secure and easy-to-use application for PGP encryption, decryption, and key management.</p>
+            <h2>Remote Control v{VERSION}</h2>
+            <p>A secure and easy-to-use application for remote desktop control, screen sharing, and file transfer.</p>
             
             <h3>System Information</h3>
             <table style="margin: 0 auto; text-align: left;">
@@ -425,10 +286,10 @@ class HelpDialog(QDialog):
             <p>Licensed under the GPL v3.0 License</p>
             
             <p>
-                <a href="https://github.com/Nsfr750/OpenPGP">GitHub Repository</a> | 
-                <a href="https://github.com/Nsfr750/OpenPGP/wiki">Wiki Pages</a> | 
-                <a href="https://github.com/Nsfr750/OpenPGP/issues">Report Issues</a> |
-                <a href="https://github.com/Nsfr750/OpenPGP/releases">Release Notes</a>
+                <a href="https://github.com/Nsfr750/remote-control">GitHub Repository</a> | 
+                <a href="https://github.com/Nsfr750/remote-control/wiki">Wiki Pages</a> | 
+                <a href="https://github.com/Nsfr750/remote-control/issues">Report Issues</a> |
+                <a href="https://github.com/Nsfr750/remote-control/releases">Release Notes</a>
             </p>
         </div>
         """

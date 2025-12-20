@@ -1,15 +1,22 @@
-from PyQT6 import QtWidgets
-from PyQT6.QtWidgets import (
+from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QTextBrowser, QScrollArea, 
     QWidget, QFrame, QHBoxLayout, QApplication, QSizePolicy
 )
-from PyQT6.QtCore import Qt, QSize, QUrl
-from PyQT6 import __version__ as QT_VERSION_STR
-# PYQT_VERSION_STR is not available in PyQT6, using PyQT6 version instead
-from PyQT6.QtGui import QPixmap, QIcon, QDesktopServices
+from PyQt6.QtCore import Qt, QSize, QUrl
+from PyQt6.QtCore import QT_VERSION_STR
+# Using PyQt6.QtCore.QT_VERSION_STR for version information
+from PyQt6.QtGui import QPixmap, QIcon, QDesktopServices
 
 # Import version information
-from gui.version import get_version, get_version_info
+try:
+    from version import get_version, get_version_info
+except ImportError:
+    # Fallback if version module is not found
+    def get_version():
+        return "1.0.0"
+    def get_version_info():
+        return {"version": get_version(), "codename": "Unknown"}
 
 def get_codename():
     """
@@ -61,10 +68,15 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+def show_about_dialog(parent=None):
+    """Show the about dialog."""
+    dialog = AboutDialog(parent)
+    dialog.exec()
+
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("About OpenPGP")
+        self.setWindowTitle("About")
         self.resize(600, 400)
         
         layout = QVBoxLayout(self)
@@ -101,7 +113,7 @@ class AboutDialog(QDialog):
         
         if not logo_found:
             # Add a placeholder label with app name if logo not found
-            logo_label.setText("OpenPGP")
+            logo_label.setText("RemoteControl")
             logo_label.setStyleSheet("""
                 QLabel {
                     font-size: 24px;
@@ -131,11 +143,11 @@ class AboutDialog(QDialog):
         
         # Description
         description = QLabel(
-            "A modern GUI for OpenPGP.\n" 
-            "- Encryption\n"
-            "- Signature\n"
-            "- Key management\n"
-            "- SSL cert generation\n\n"
+            "A modern GUI for remote desktop control.\n" 
+            "- Remote desktop control\n"
+            "- Screen sharing\n"
+            "- File transfer\n"
+            "- System information\n\n"
             "All operations are local and privacy-friendly."
         )
         description.setWordWrap(True)
@@ -211,7 +223,7 @@ class AboutDialog(QDialog):
         # GitHub button
         github_btn = QPushButton("GitHub")
         github_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://github.com/Nsfr750/OpenPGP")))
+            QUrl("https://github.com/Nsfr750/remote-control")))
         # Style GitHub button with blue background and white text
         github_btn.setStyleSheet("""
             QPushButton {

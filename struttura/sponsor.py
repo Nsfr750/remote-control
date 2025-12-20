@@ -1,14 +1,19 @@
 # gui/sponsor.py
-from PyQT6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QPushButton, 
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QPushButton, 
                            QHBoxLayout, QTextBrowser, QApplication, QWidget,
-                           QGridLayout, QSizePolicy)
-from PyQT6.QtGui import QDesktopServices
-from PyQT6.QtCore import Qt, QUrl, QSize, QBuffer, QTimer
-from PyQT6.QtGui import QPixmap, QImage, QIcon
+                           QGridLayout, QSizePolicy, QDialogButtonBox)
+from PyQt6.QtGui import QDesktopServices, QPixmap, QImage, QIcon, QClipboard
+from PyQt6.QtCore import Qt, QUrl, QSize, QBuffer, QTimer
 import webbrowser
 import os
 import io
 import logging
+
+def show_sponsor_dialog(parent=None):
+    """Show the sponsor dialog."""
+    dialog = SponsorDialog(parent)
+    dialog.exec()
+    return dialog
 
 # Try to import qrcode for QR code generation
 try:
@@ -42,7 +47,7 @@ class SponsorDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Title
-        title = QLabel("Support OpenPGP")
+        title = QLabel("Support remote-control")
         title.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 20px;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
@@ -192,7 +197,7 @@ class SponsorDialog(QDialog):
         other_help.setHtml("""
         <h3>Other Ways to Help:</h3>
         <ul>
-            <li>Star the project on <a href="https://github.com/Nsfr750/OpenPGP">GitHub</a></li>
+            <li>Star the project on <a href="https://github.com/Nsfr750/remote-control">GitHub</a></li>
             <li>Report bugs and suggest features</li>
             <li>Share with others who might find it useful</li>
         </ul>

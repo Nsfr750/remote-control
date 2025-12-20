@@ -169,6 +169,17 @@ class RemoteControlServer:
                 response = self._handle_message(msg_type, data, client_socket, client_id, username)
                 if response:
                     msg_type, response_data = response
+                    # Update authentication status if this was an AUTH message
+                    if msg_type == MessageType.AUTH_RESPONSE:
+                        try:
+                            response_data_str = response_data.decode('utf-8')
+                            response_json = json.loads(response_data_str)
+                            if response_json.get('success', False):
+                                authenticated = True
+                                username = self.clients.get(client_id, {}).get('username')
+                        except (json.JSONDecodeError, AttributeError) as e:
+                            logger.error(f"Error parsing auth response: {e}")
+                    
                     self._send_message(client_socket, msg_type, response_data)
                 
         except ConnectionResetError:
@@ -229,6 +240,127 @@ class RemoteControlServer:
         except Exception as e:
             logger.error(f"Error sending message: {e}")
             raise
+
+    def _handle_info(self) -> Tuple[MessageType, bytes]:
+        """Handle system information request."""
+        try:
+            system_info = {
+                "platform": platform.system(),
+                "platform_version": platform.version(),
+                "hostname": socket.gethostname(),
+                "processor": platform.processor(),
+                "cpu_count": os.cpu_count(),
+                "total_ram": self._get_total_ram(),
+                "free_ram": self._get_free_ram(),
+                "disk_usage": self._get_disk_usage(),
+                "uptime": self._get_uptime()
+            }
+            return MessageType.INFO, json.dumps(system_info).encode('utf-8')
+        except Exception as e:
+            logger.error(f"Error getting system info: {e}")
+            return MessageType.ERROR, f"Failed to get system info: {e}".encode('utf-8')
+
+    def _handle_screenshot(self) -> Tuple[MessageType, bytes]:
+        """Handle screenshot request."""
+        try:
+            if not self.screen_controller:
+                return MessageType.ERROR, b"Screen controller not available"
+            
+            # Take screenshot
+            screenshot_data = self.screen_controller.take_screenshot()
+            if not screenshot_data:
+                return MessageType.ERROR, b"Failed to capture screenshot"
+                
+            # Compress the image data
+            from io import BytesIO
+            import zlib
+            compressed_data = zlib.compress(screenshot_data)
+            return MessageType.SCREENSHOT, compressed_data
+            
+        except Exception as e:
+            logger.error(f"Error capturing screenshot: {e}")
+            return MessageType.ERROR, f"Failed to capture screenshot: {e}".encode('utf-8')
+
+    def _get_total_ram(self) -> int:
+        """Get total system RAM in bytes."""
+        if self.platform == 'windows':
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            c_ulong = ctypes.c_ulong
+            class MEMORYSTATUS(ctypes.Structure):
+                _fields_ = [
+                    ('dwLength', c_ulong),
+                    ('dwMemoryLoad', c_ulong),
+                    ('dwTotalPhys', c_ulong),
+                    ('dwAvailPhys', c_ulong),
+                    ('dwTotalPageFile', c_ulong),
+                    ('dwAvailPageFile', c_ulong),
+                    ('dwTotalVirtual', c_ulong),
+                    ('dwAvailVirtual', c_ulong)
+                ]
+            memoryStatus = MEMORYSTATUS()
+            memoryStatus.dwLength = ctypes.sizeof(MEMORYSTATUS)
+            ctypes.windll.kernel32.GlobalMemoryStatus(ctypes.byref(memoryStatus))
+            return memoryStatus.dwTotalPhys
+        else:
+            with open('/proc/meminfo', 'r') as f:
+                mem_total = f.readline()
+                return int(mem_total.split()[1]) * 1024  # Convert from KB to bytes
+
+    def _get_free_ram(self) -> int:
+        """Get free system RAM in bytes."""
+        if self.platform == 'windows':
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            c_ulong = ctypes.c_ulong
+            class MEMORYSTATUS(ctypes.Structure):
+                _fields_ = [
+                    ('dwLength', c_ulong),
+                    ('dwMemoryLoad', c_ulong),
+                    ('dwTotalPhys', c_ulong),
+                    ('dwAvailPhys', c_ulong),
+                    ('dwTotalPageFile', c_ulong),
+                    ('dwAvailPageFile', c_ulong),
+                    ('dwTotalVirtual', c_ulong),
+                    ('dwAvailVirtual', c_ulong)
+                ]
+            memoryStatus = MEMORYSTATUS()
+            memoryStatus.dwLength = ctypes.sizeof(MEMORYSTATUS)
+            ctypes.windll.kernel32.GlobalMemoryStatus(ctypes.byref(memoryStatus))
+            return memoryStatus.dwAvailPhys
+        else:
+            with open('/proc/meminfo', 'r') as f:
+                for line in f:
+                    if 'MemAvailable' in line:
+                        return int(line.split()[1]) * 1024  # Convert from KB to bytes
+            return 0
+
+    def _get_disk_usage(self) -> dict:
+        """Get disk usage information."""
+        import shutil
+        disk_usage = {}
+        for partition in self.allowed_directories:
+            try:
+                usage = shutil.disk_usage(partition)
+                disk_usage[partition] = {
+                    'total': usage.total,
+                    'used': usage.used,
+                    'free': usage.free,
+                    'percent': (usage.used / usage.total) * 100 if usage.total > 0 else 0
+                }
+            except Exception as e:
+                logger.warning(f"Error getting disk usage for {partition}: {e}")
+        return disk_usage
+
+    def _get_uptime(self) -> float:
+        """Get system uptime in seconds."""
+        if self.platform == 'windows':
+            import ctypes
+            lib = ctypes.windll.kernel32
+            return float(lib.GetTickCount64() / 1000.0)
+        else:
+            with open('/proc/uptime', 'r') as f:
+                return float(f.readline().split()[0])
 
     def _handle_auth(self, data: bytes, client_id: str) -> Tuple[MessageType, bytes]:
         """Handle authentication."""

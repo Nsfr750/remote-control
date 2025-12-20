@@ -22,6 +22,8 @@ class MessageType(Enum):
     ERROR = 9
     INFO = 10
     DISCONNECT = 11
+    PING = 12        # Keep-alive ping
+    PONG = 13        # Keep-alive pong response
 
 class Message:
     """Message class for client-server communication."""
