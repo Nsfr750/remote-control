@@ -1,0 +1,10 @@
+PyQt6==6.6.1
+cryptography==41.0.7
+pyautogui==0.9.54
+watchdog==3.0.0
+keyboard==0.13.5
+pywin32==306; sys_platform == 'win32'
+python-xlib==0.33; sys_platform == 'linux'
+pillow==10.1.0
+qrcode==7.4.2
+wand==0.6.11
