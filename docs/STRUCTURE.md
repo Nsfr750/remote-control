@@ -1,4 +1,4 @@
-# Project Structure
+# 🏗️ Project Structure
 
 ```
 remote_control/
@@ -14,22 +14,23 @@ remote_control/
 ├── server/                 # Server application
 │   ├── __init__.py
 │   ├── server.py          # Main server logic
-│   ├── mock_server.py     # Mock server for testing
-│   ├── input/             # Input handling
-│   │   ├── __init__.py
-│   │   ├── windows.py     # Windows input handling
-│   │   └── linux.py       # Linux input handling
-│   └── screen/            # Screen capture
-│       ├── __init__.py
-│       ├── windows.py     # Windows screen capture
-│       └── linux.py       # Linux screen capture
+│   ├── input.py           # Input controller interface
+│   ├── screen.py          # Screen controller interface
+│   └── platform/          # Platform-specific implementations
+│       ├── windows/       # Windows-specific code
+│       │   ├── __init__.py
+│       │   ├── input.py   # Windows input handling
+│       │   └── screen.py  # Windows screen capture
+│       └── linux/         # Linux-specific code
+│           ├── __init__.py
+│           ├── input.py   # Linux input handling (placeholder)
+│           └── screen.py  # Linux screen capture (placeholder)
 │
-└── common/                # Shared code
-    ├── __init__.py
-    ├── protocol.py        # Communication protocol
-    ├── security.py        # Security utilities
-    └── file_transfer.py   # File transfer utilities
-```
+├── common/                # Shared code
+│   ├── __init__.py
+│   ├── protocol.py        # Communication protocol
+│   ├── security.py        # Security utilities
+│   └── file_transfer.py   # File transfer utilities
 
 ## Client Components
 
@@ -39,40 +40,39 @@ remote_control/
 - Coordinates between GUI and network
 
 ### GUI
-- Main window with tabbed interface
-- Login/authentication dialog
-- File browser/transfer interface
-- Remote control view
-- System information display
+- Main window with remote desktop view
+- Connection status indicators
+- Settings panel
+- File transfer interface
 
 ## Server Components
 
 ### Core
 - Manages client connections
 - Handles authentication
-- Routes messages between clients
+- Routes messages between components
 
 ### Input Handling
-- Platform-specific input simulation
-- Mouse and keyboard control
-- Clipboard management
+- Processes mouse and keyboard events
+- Platform-specific implementations
+- Event validation and security
 
 ### Screen Capture
-- Platform-specific screen capture
-- Image compression
-- Screen update optimization
+- Captures screen content
+- Handles multiple displays
+- Optimizes image transfer
 
 ## Common Components
 
 ### Protocol
-- Message serialization/deserialization
-- Command definitions
+- Defines message formats
+- Handles serialization/deserialization
+- Manages connection handshake
 - Data structures
 
 ### Security
 - Encryption/decryption
 - Hashing
-- Certificate management
 
 ### File Transfer
 - File operations

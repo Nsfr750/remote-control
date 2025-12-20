@@ -57,40 +57,72 @@ python main.py
 
 ## Getting Started
 
-### First Launch
-1. On first run, the application will create a configuration directory
-2. You'll be prompted to set your preferred language
-3. The main window will open with the dashboard
+### Prerequisites
+- Python 3.8 or higher
+- Required system permissions for screen capture and input simulation
+- Network access to the remote system
 
-### Basic Navigation
-- Use the sidebar to access different sections
-- The status bar shows current system status
-- Access settings from the gear icon in the top-right corner
+### Installation
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/yourusername/remote-control.git
+   cd remote-control
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Running the Server
+
+```bash
+python -m server.server --host 0.0.0.0 --port 5000
+```
+
+### Running the Client
+
+```bash
+python -m client.client --host <server-address> --port 5000
+```
 
 ## User Interface
 
 ### Main Window
-- **Menu Bar**: Access all application features
-- **Sidebar**: Quick navigation between sections
-- **Status Bar**: Shows system status and notifications
-- **Content Area**: Displays the current view
+- **Connection Status**: Shows current connection status and server information
+- **Remote Desktop**: Displays the remote screen in real-time
+- **Control Bar**: Quick access to common functions
+- **File Browser**: Tab for managing file transfers
 
-### Views
-- **Dashboard**: Overview of system status
-- **Configuration**: Application settings
-- **Help**: Documentation and support
+### Connection Dialog
+- **Server Address**: IP or hostname of the remote server
+- **Port**: Server port (default: 5000)
+- **Authentication**: Username and password for secure access
 
 ## Features
 
-### Core Functionality
-- **Real-time Monitoring**: Track system resources
-- **Customizable Interface**: Adapt the UI to your preferences
-- **Multi-language Support**: Available in multiple languages
+### Remote Desktop
+- **Screen Sharing**: View the remote desktop in real-time
+- **Mouse Control**: Full mouse control including movement, clicks, and scrolling
+- **Keyboard Input**: Send keyboard events to the remote system
+- **Multi-Monitor Support**: Switch between multiple displays on the remote system
 
-### Advanced Features
-- **Plugin System**: Extend functionality with plugins
-- **Automation**: Schedule tasks and automate workflows
-- **Security**: Built-in security features to protect your data
+### Input Handling
+- **Platform-Specific**: Optimized implementations for Windows and Linux
+- **Low Latency**: Responsive control with minimal delay
+- **Secure**: Input validation to prevent unauthorized access
+
+### File Transfer
+- **Secure File Transfer**: Encrypted file transfers between systems
+- **Drag & Drop**: Intuitive interface for transferring files
+- **Directory Navigation**: Browse remote file system with ease
+
+### Security
+- **Encrypted Communication**: All data is encrypted in transit
+- **Authentication**: Secure login with username and password
+- **Access Control**: Granular permissions for different users
 
 ## Configuration
 

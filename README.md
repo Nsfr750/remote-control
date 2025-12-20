@@ -15,9 +15,16 @@
 
 ## ✨ Features
 
+### 🖥️ Remote Control
+- 🖱️ Full mouse control (movement, clicks, scrolling)
+- ⌨️ Keyboard input handling
+- 🖼️ Real-time screen sharing
+- 🏗️ Platform-specific implementations for Windows and Linux
+
 ### 🔒 Secure Authentication
 - 🔑 Password protection with strong encryption
 - 🔄 Session management with auto-timeout
+- 🔐 Secure credential storage
 - 👤 Multi-user support with role-based access
 
 ### 🖥️ Remote Control

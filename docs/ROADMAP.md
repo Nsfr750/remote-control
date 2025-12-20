@@ -1,23 +1,27 @@
-# Project Roadmap
+# 🗺️ Project Roadmap
 
-## Phase 1: Core Functionality (Q1 2026)
+## Phase 1: Core Functionality (Q1 2026) - COMPLETED ✅
 - [x] Basic client-server communication
-- [x] Screen sharing
-- [x] Remote input control
-- [x] File transfer
-- [x] Authentication system
-- [ ] Multi-platform support
-  - [x] Windows
-  - [x] Linux
-  - [ ] macOS
+- [x] Screen sharing with platform-specific implementations
+- [x] Remote input control (mouse and keyboard)
+- [x] File transfer capabilities
+- [x] Secure authentication system
+- [x] Multi-platform support
+  - [x] Windows (fully implemented)
+  - [x] Linux (basic implementation)
+  - [ ] macOS (planned)
 
-## Phase 2: Enhanced Features (Q2 2026)
+## Phase 2: Enhanced Features (Q2 2026) - IN PROGRESS 🚧
+- [x] Platform-specific input handling
+- [x] Enhanced error handling and logging
 - [ ] Advanced security features
   - [ ] Two-factor authentication
   - [ ] End-to-end encryption
   - [ ] Access control lists
 - [ ] Performance improvements
-  - [ ] Screen compression
+  - [ ] Screen compression (in progress)
+  - [ ] Reduced latency for input handling
+  - [ ] Optimized network protocol
   - [ ] Bandwidth optimization
   - [ ] Caching mechanisms
 - [ ] User interface enhancements

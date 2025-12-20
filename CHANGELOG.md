@@ -6,8 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### ✨ Added
 
-- 🔄 Enhanced error handling in client-server communication
-- 🔐 Improved authentication flow with better security
+- 🖱️ Added Windows-specific input controller with mouse and keyboard event handling
+- 🖥️ Implemented platform-specific screen capture for Windows
+- 🏗️ Added modular input handling architecture
+- 🛠️ Added proper error handling for input operations
+- 📊 Enhanced system information reporting
+- 🔄 Improved client-server message handling
+- 🔐 Enhanced authentication flow with better security
 - 📝 Better logging throughout the application
 - ✅ Comprehensive test coverage
 - 🌐 Multi-language support infrastructure
