@@ -70,10 +70,10 @@ class RemoteControlServer:
         """Get the appropriate screen controller for the platform."""
         try:
             if self.platform == 'windows':
-                from screen.windows import WindowsScreenController
+                from platform.windows.screen import WindowsScreenCapture as WindowsScreenController
                 return WindowsScreenController()
             else:
-                from screen.linux import LinuxScreenController
+                from platform.linux.screen import LinuxScreenCapture as LinuxScreenController
                 return LinuxScreenController()
         except ImportError as e:
             logger.error(f"Failed to load screen controller: {e}")
@@ -83,10 +83,10 @@ class RemoteControlServer:
         """Get the appropriate input controller for the platform."""
         try:
             if self.platform == 'windows':
-                from input.windows import WindowsInputController
+                from platform.windows.input import WindowsInputHandler as WindowsInputController
                 return WindowsInputController()
             else:
-                from input.linux import LinuxInputController
+                from platform.linux.input import LinuxInputHandler as LinuxInputController
                 return LinuxInputController()
         except ImportError as e:
             logger.error(f"Failed to load input controller: {e}")
@@ -245,17 +245,21 @@ class RemoteControlServer:
         """Handle system information request."""
         try:
             system_info = {
-                "platform": platform.system(),
-                "platform_version": platform.version(),
-                "hostname": socket.gethostname(),
-                "processor": platform.processor(),
-                "cpu_count": os.cpu_count(),
-                "total_ram": self._get_total_ram(),
-                "free_ram": self._get_free_ram(),
-                "disk_usage": self._get_disk_usage(),
-                "uptime": self._get_uptime()
+                'platform': platform.platform(),
+                'python_version': platform.python_version(),
+                'hostname': platform.node(),
+                'cpu_count': os.cpu_count(),
+                'screen_controller': self.screen_controller is not None,
+                'input_controller': self.input_controller is not None,
+                'system': platform.system(),
+                'release': platform.release(),
+                'machine': platform.machine(),
+                'processor': platform.processor(),
+                'python_implementation': platform.python_implementation(),
+                'python_compiler': platform.python_compiler()
             }
             return MessageType.INFO, json.dumps(system_info).encode('utf-8')
+            
         except Exception as e:
             logger.error(f"Error getting system info: {e}")
             return MessageType.ERROR, f"Failed to get system info: {e}".encode('utf-8')
@@ -266,16 +270,12 @@ class RemoteControlServer:
             if not self.screen_controller:
                 return MessageType.ERROR, b"Screen controller not available"
             
-            # Take screenshot
-            screenshot_data = self.screen_controller.take_screenshot()
-            if not screenshot_data:
+            # Capture the screen
+            screenshot = self.screen_controller.capture_screen()
+            if screenshot is None:
                 return MessageType.ERROR, b"Failed to capture screenshot"
                 
-            # Compress the image data
-            from io import BytesIO
-            import zlib
-            compressed_data = zlib.compress(screenshot_data)
-            return MessageType.SCREENSHOT, compressed_data
+            return MessageType.SCREENSHOT, screenshot
             
         except Exception as e:
             logger.error(f"Error capturing screenshot: {e}")
