@@ -442,123 +442,122 @@ class MockServer:
             traceback.print_exc()
     
     def _generate_screenshot(self, client_socket):
-    """Generate a mock screenshot with system information using Wand."""
-    try:
-        # Create a new image with Wand
-        with Image(width=self.screen_width, height=self.screen_height, 
-                  background=Color('white')) as img:
-            
-            draw = Drawing()
-            
-            # Draw header
-            draw.fill_color = Color('#2c3e50')
-            draw.rectangle(left=0, top=0, 
-                         width=self.screen_width, height=30)
-            
-            # Draw header text
-            header = f"Remote Control Server - {time.ctime()}"
-            draw.fill_color = Color('white')
-            draw.font_size = 16
-            draw.text(10, 20, header)
-            
-            # System information section
-            y_offset = 40
-            draw.fill_color = Color('black')
-            draw.text(20, y_offset, "System Information:")
-            y_offset += 25
-            
-            # Get system info
-            try:
-                cpu_percent = psutil.cpu_percent(interval=0.1)
-                mem = psutil.virtual_memory()
-                disk = psutil.disk_usage('/')
+        """Generate a mock screenshot with system information using Wand."""
+        try:
+            # Create a new image with Wand
+            with Image(width=self.screen_width, height=self.screen_height, 
+                      background=Color('white')) as img:
+                draw = Drawing()
                 
-                # System info text
-                sys_info = [
-                    f"CPU: {cpu_percent}%",
-                    f"Memory: {mem.percent}% used ({mem.used//(1024*1024)}MB / {mem.total//(1024*1024)}MB)",
-                    f"Disk: {disk.percent}% used ({disk.used//(1024*1024)}MB / {disk.total//(1024*1024)}MB)",
-                    f"Connected Clients: {len([c for c in self.clients.values() if c.get('authenticated')])}"
-                ]
+                # Draw header
+                draw.fill_color = Color('#2c3e50')
+                draw.rectangle(left=0, top=0, 
+                            width=self.screen_width, height=30)
                 
-                for info in sys_info:
-                    draw.text(30, y_offset, info)
+                # Draw header text
+                header = f"Remote Control Server - {time.ctime()}"
+                draw.fill_color = Color('white')
+                draw.font_size = 16
+                draw.text(10, 20, header)
+                
+                # System information section
+                y_offset = 40
+                draw.fill_color = Color('black')
+                draw.text(20, y_offset, "System Information:")
+                y_offset += 25
+                
+                # Get system info
+                try:
+                    cpu_percent = psutil.cpu_percent(interval=0.1)
+                    mem = psutil.virtual_memory()
+                    disk = psutil.disk_usage('/')
+                    
+                    # System info text
+                    sys_info = [
+                        f"CPU: {cpu_percent}%",
+                        f"Memory: {mem.percent}% used ({mem.used//(1024*1024)}MB / {mem.total//(1024*1024)}MB)",
+                        f"Disk: {disk.percent}% used ({disk.used//(1024*1024)}MB / {disk.total//(1024*1024)}MB)",
+                        f"Connected Clients: {len([c for c in self.clients.values() if c.get('authenticated')])}"
+                    ]
+                    
+                    for info in sys_info:
+                        draw.text(30, y_offset, info)
+                        y_offset += 20
+                        
+                except Exception as e:
+                    error_msg = "System information unavailable"
+                    draw.fill_color = Color('red')
+                    draw.text(30, y_offset, error_msg)
                     y_offset += 20
                     
-            except Exception as e:
-                error_msg = "System information unavailable"
-                draw.fill_color = Color('red')
-                draw.text(30, y_offset, error_msg)
+                # Add recent chat messages
                 y_offset += 20
+                draw.fill_color = Color('black')
+                draw.text(20, y_offset, "Recent Chat:")
+                y_offset += 25
+                
+                for msg in self.chat_history[-5:]:  # Show last 5 messages
+                    msg_text = f"{msg.get('sender', 'Unknown')}: {msg.get('message', '')}"
+                    draw.fill_color = Color('#2c3e50')
+                    draw.text(30, y_offset, msg_text)
+                    y_offset += 20
+                    if y_offset > self.screen_height - 50:
+                        break
             
-            # Add recent chat messages
-            y_offset += 20
-            draw.fill_color = Color('black')
-            draw.text(20, y_offset, "Recent Chat:")
-            y_offset += 25
-            
-            for msg in self.chat_history[-5:]:  # Show last 5 messages
-                msg_text = f"{msg.get('sender', 'Unknown')}: {msg.get('message', '')}"
+                # Add footer
+                footer = f"Server: {platform.node()} | {len(self.clients)} clients connected"
                 draw.fill_color = Color('#2c3e50')
-                draw.text(30, y_offset, msg_text)
-                y_offset += 20
-                if y_offset > self.screen_height - 50:
-                    break
-            
-            # Add footer
-            footer = f"Server: {platform.node()} | {len(self.clients)} clients connected"
-            draw.fill_color = Color('#2c3e50')
-            draw.rectangle(left=0, top=self.screen_height-25, 
-                         width=self.screen_width, height=self.screen_height)
-            draw.fill_color = Color('white')
-            draw.text(10, self.screen_height-20, footer)
-            
-            # Add a subtle grid
-            draw.stroke_color = Color('#f0f0f0')
-            for i in range(0, self.screen_width, 50):
-                draw.line((i, 30), (i, self.screen_height-25))
-            for i in range(30, self.screen_height-25, 50):
-                draw.line((0, i), (self.screen_width, i))
-            
-            # Apply all drawings
-            draw(img)
-            
-            # Convert to JPEG and get binary data
-            img.format = 'jpeg'
-            img.compression_quality = 70
-            img_data = img.make_blob()
-            
-            # Send the screenshot
-            self._send_message(client_socket, 'screenshot', {
-                'data': base64.b64encode(img_data).decode('utf-8'),
-                'width': self.screen_width,
-                'height': self.screen_height,
-                'timestamp': time.time()
-            })
-            
-    except Exception as e:
-        print(f"Error generating screenshot: {e}")
-        traceback.print_exc()
-        
-        # Fallback to simple screenshot on error
-        try:
-            with Image(width=800, height=600, background=Color('white')) as img:
-                draw = Drawing()
-                draw.fill_color = Color('red')
-                draw.text(10, 10, f"Error generating screenshot: {e}")
+                draw.rectangle(left=0, top=self.screen_height-25, 
+                             width=self.screen_width, height=self.screen_height)
+                draw.fill_color = Color('white')
+                draw.text(10, self.screen_height-20, footer)
+                
+                # Add a subtle grid
+                draw.stroke_color = Color('#f0f0f0')
+                for i in range(0, self.screen_width, 50):
+                    draw.line((i, 30), (i, self.screen_height-25))
+                for i in range(30, self.screen_height-25, 50):
+                    draw.line((0, i), (self.screen_width, i))
+                
+                # Apply all drawings
                 draw(img)
                 
+                # Convert to JPEG and get binary data
                 img.format = 'jpeg'
+                img.compression_quality = 70
                 img_data = img.make_blob()
                 
+                # Send the screenshot
                 self._send_message(client_socket, 'screenshot', {
                     'data': base64.b64encode(img_data).decode('utf-8'),
-                    'width': 800,
-                    'height': 600,
-                    'error': str(e)
+                    'width': self.screen_width,
+                    'height': self.screen_height,
+                    'timestamp': time.time()
                 })
-        except Exception as e2:
-            print(f"Error in fallback screenshot: {e2}")
+            
+        except Exception as e:
+            print(f"Error generating screenshot: {e}")
+            traceback.print_exc()
+            
+            # Fallback to simple screenshot on error
+            try:
+                with Image(width=800, height=600, background=Color('white')) as img:
+                    draw = Drawing()
+                    draw.fill_color = Color('red')
+                    draw.text(10, 10, f"Error generating screenshot: {e}")
+                    draw(img)
+                    
+                    img.format = 'jpeg'
+                    img_data = img.make_blob()
+                    
+                    self._send_message(client_socket, 'screenshot', {
+                        'data': base64.b64encode(img_data).decode('utf-8'),
+                        'width': 800,
+                        'height': 600,
+                        'error': str(e)
+                    })
+            except Exception as e2:
+                print(f"Error in fallback screenshot: {e2}")
     
     def _handle_file_upload(self, client_socket, file_data):
         """Handle file upload."""
