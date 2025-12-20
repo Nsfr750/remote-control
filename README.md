@@ -13,24 +13,6 @@
   <img src="https://img.shields.io/badge/Status-Beta-yellow" alt="Status">
 </div>
 
-graph TD
-    A[Project Structure] --> B[remote_control/]
-    B --> C[client/]
-    B --> D[server/]
-    B --> E[common/]
-    B --> F[requirements.txt]
-    B --> G[README.md]
-    C --> H[__init__.py]
-    C --> I[client.py]
-    C --> J[gui.py]
-    D --> K[__init__.py]
-    D --> L[server.py]
-    D --> M[remote_control.py]
-    E --> N[__init__.py]
-    E --> O[protocol.py]
-    E --> P[security.py]
-    E --> Q[file_transfer.py]
-
 ## ✨ Features
 
 ### 🖥️ Remote Control
