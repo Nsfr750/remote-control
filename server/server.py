@@ -10,6 +10,7 @@ import socket
 import logging
 import threading
 import platform
+import time
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Callable, Any
 
@@ -46,9 +47,13 @@ class RemoteControlServer:
         self.running = False
         self.clients: Dict[str, Dict] = {}
         self.auth_required = True
-        self.allowed_users = self._load_users()
         self.server_socket: Optional[socket.socket] = None
+        
+        # Initialize security manager first
         self.security_manager = SecurityManager()
+        
+        # Then load users which depends on security_manager
+        self.allowed_users = self._load_users()
         
         # Platform-specific imports
         self.platform = platform.system().lower()
@@ -59,24 +64,44 @@ class RemoteControlServer:
         self.file_transfer = FileTransfer()
         self.allowed_directories = self._get_allowed_directories()
     
-    def _load_users(self) -> Dict[str, str]:
-        """Load user credentials from file."""
+    def _load_users(self) -> Dict[str, dict]:
+        """Load user credentials from file.
+        
+        Returns:
+            Dict with usernames as keys and user data as values
+        """
         users_file = Path('users.json')
+        default_users = {
+            'admin': {
+                'password': self._hash_password('admin'),
+                'is_admin': True,
+                'created_at': '2023-01-01T00:00:00Z',
+                'last_login': None
+            }
+        }
+        
         if users_file.exists():
             try:
                 with open(users_file, 'r') as f:
-                    return json.load(f)
+                    users = json.load(f)
+                    # Convert old format if needed
+                    if users and isinstance(next(iter(users.values())), str):
+                        users = {user: {'password': pwd, 'is_admin': False} 
+                               for user, pwd in users.items()}
+                    return users
             except (json.JSONDecodeError, IOError) as e:
                 logger.error(f"Error loading users file: {e}")
+                logger.info("Creating new users file with default admin")
         
-        # Create default admin user if no users file exists
-        default_users = {
-            'admin': self.security_manager.hash_password('admin')
-        }
+        # Create default admin user if no users file exists or there was an error
         try:
             with open(users_file, 'w') as f:
                 json.dump(default_users, f, indent=2)
             logger.info("Created default admin user with password 'admin'")
+            return default_users
+            
+        except Exception as e:
+            logger.error(f"Error creating default users file: {e}")
             return default_users
         except IOError as e:
             logger.error(f"Error creating default users file: {e}")
@@ -272,47 +297,165 @@ class RemoteControlServer:
             logger.error(f"Error handling message: {e}")
             return MessageType.ERROR, str(e).encode('utf-8')
     
-    def _handle_auth(self, data: bytes, client_id: str) -> Tuple[MessageType, bytes]:
-        """Handle authentication.
+    def _hash_password(self, password: str) -> str:
+        """Hash a password for storage."""
+        return self.security_manager.hash_password(password)
+        
+    def verify_user(self, username: str, password: str) -> Tuple[bool, str]:
+        """Verify user credentials.
         
         Args:
-            data: Authentication data
-            client_id: Client ID
+            username: Username to verify
+            password: Password to verify
             
         Returns:
-            Tuple of (response_type, response_data)
+            Tuple of (success, message)
         """
-        try:
-            auth_msg = AuthMessage.from_bytes(data)
+        if username not in self.allowed_users:
+            return False, 'Invalid username or password'
             
-            # Check credentials
-            if (auth_msg.username in self.allowed_users and 
-                self.security_manager.verify_password(self.allowed_users[auth_msg.username], auth_msg.password)):
-                
-                # Generate session key
-                session_key = os.urandom(32).hex()
-                self.clients[auth_msg.username] = {
-                    'client_id': client_id,
-                    'session_key': session_key,
-                    'authenticated': True
-                }
-                
-                logger.info(f"User {auth_msg.username} authenticated successfully")
-                return MessageType.AUTH_RESPONSE, json.dumps({
-                    'success': True,
-                    'session_key': session_key,
-                    'message': 'Authentication successful'
-                }).encode('utf-8')
-            else:
-                logger.warning(f"Failed authentication attempt for user {auth_msg.username}")
-                return MessageType.AUTH_RESPONSE, json.dumps({
-                    'success': False,
-                    'message': 'Invalid username or password'
-                }).encode('utf-8')
-                
+        stored_hash = self.allowed_users[username].get('password')
+        if not stored_hash:
+            return False, 'User has no password set'
+            
+        if not self.security_manager.verify_password(password, stored_hash):
+            return False, 'Invalid username or password'
+            
+        return True, 'Authentication successful'
+    
+    def _save_users(self) -> bool:
+        """Save users to file."""
+        users_file = Path('users.json')
+        try:
+            with open(users_file, 'w') as f:
+                json.dump(self.allowed_users, f, indent=2)
+            return True
         except Exception as e:
-            logger.error(f"Authentication error: {e}")
-            return MessageType.ERROR, str(e).encode('utf-8')
+            logger.error(f"Error saving users file: {e}")
+            return False
+    
+    def add_user(self, username: str, password: str, is_admin: bool = False) -> Tuple[bool, str]:
+        """Add a new user.
+        
+        Args:
+            username: Username for the new user
+            password: Password for the new user
+            is_admin: Whether the user should have admin privileges
+            
+        Returns:
+            Tuple of (success, message)
+        """
+        if not username or not password:
+            return False, 'Username and password are required'
+            
+        if username in self.allowed_users:
+            return False, 'Username already exists'
+            
+        self.allowed_users[username] = {
+            'password': self._hash_password(password),
+            'is_admin': is_admin,
+            'created_at': time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'last_login': None
+        }
+        
+        if self._save_users():
+            return True, f'User {username} created successfully'
+        return False, 'Failed to save user'
+    
+    def update_user_password(self, username: str, new_password: str) -> Tuple[bool, str]:
+        """Update a user's password.
+        
+        Args:
+            username: Username to update
+            new_password: New password
+            
+        Returns:
+            Tuple of (success, message)
+        """
+        if username not in self.allowed_users:
+            return False, 'User not found'
+            
+        self.allowed_users[username]['password'] = self._hash_password(new_password)
+        
+        if self._save_users():
+            return True, 'Password updated successfully'
+        return False, 'Failed to update password'
+    
+    # In server/server.py, update the _handle_auth method
+def _handle_auth(self, data: bytes, client_id: str) -> Tuple[MessageType, bytes]:
+    """Handle authentication.
+    
+    Args:
+        data: Authentication data
+        client_id: Client ID
+        
+    Returns:
+        Tuple of (response_type, response_data)
+    """
+    try:
+        auth_data = json.loads(data.decode('utf-8'))
+        username = auth_data.get('username')
+        password = auth_data.get('password')
+        
+        if not username or not password:
+            logger.warning("Missing username or password in auth request")
+            return MessageType.AUTH_RESPONSE, json.dumps({
+                'success': False,
+                'message': 'Missing username or password'
+            }).encode('utf-8')
+            
+        # Verify user credentials
+        if username not in self.allowed_users:
+            logger.warning(f"Authentication failed: user '{username}' not found")
+            return MessageType.AUTH_RESPONSE, json.dumps({
+                'success': False,
+                'message': 'Invalid username or password'
+            }).encode('utf-8')
+            
+        # Get stored password hash
+        stored_hash = self.allowed_users[username].get('password', '')
+        if not stored_hash:
+            logger.warning(f"No password hash found for user '{username}'")
+            return MessageType.AUTH_RESPONSE, json.dumps({
+                'success': False,
+                'message': 'Invalid authentication data'
+            }).encode('utf-8')
+            
+        # Verify password
+        salt, hashed = stored_hash.split(':', 1) if ':' in stored_hash else ('', stored_hash)
+        if not self.security_manager.verify_password(password, salt, hashed):
+            logger.warning(f"Authentication failed: invalid password for user '{username}'")
+            return MessageType.AUTH_RESPONSE, json.dumps({
+                'success': False,
+                'message': 'Invalid username or password'
+            }).encode('utf-8')
+        
+        # Update last login time
+        self.allowed_users[username]['last_login'] = time.strftime('%Y-%m-%dT%H:%M:%SZ')
+        self._save_users()
+        
+        # Authentication successful
+        self.clients[client_id] = {
+            'username': username,
+            'authenticated': True,
+            'is_admin': self.allowed_users[username].get('is_admin', False),
+            'last_active': time.time()
+        }
+        
+        logger.info(f"User '{username}' authenticated successfully")
+        return MessageType.AUTH_RESPONSE, json.dumps({
+            'success': True,
+            'message': 'Authentication successful',
+            'user': username,
+            'is_admin': self.allowed_users[username].get('is_admin', False)
+        }).encode('utf-8')
+        
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON in auth request")
+        return MessageType.ERROR, b'Invalid authentication data'
+    except Exception as e:
+        logger.error(f"Authentication error: {e}", exc_info=True)
+        return MessageType.ERROR, b'Authentication failed'
     
     def _handle_mouse_move(self, data: bytes) -> Tuple[MessageType, bytes]:
         """Handle mouse movement.

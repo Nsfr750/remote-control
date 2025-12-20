@@ -8,3 +8,4 @@ python-xlib>=0.33; sys_platform == 'linux'
 wand>=0.6.11
 qrcode>=7.4.2
 psutil>=7.1.3
+pylint>=4.0.4

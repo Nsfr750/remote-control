@@ -181,3 +181,5 @@ cython_debug/
 .cursorindexingignore
 /.windsurf
 /setup
+test.py
+users.json

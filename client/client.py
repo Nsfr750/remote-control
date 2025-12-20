@@ -20,8 +20,8 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                             QLabel, QLineEdit, QPushButton, QMessageBox, QTabWidget,
                             QFileDialog, QListWidget, QSystemTrayIcon, QStyle, QStatusBar,
                             QDialog, QDialogButtonBox, QFormLayout, QCheckBox, QProgressBar,
-                            QInputDialog)
-from PyQt6.QtCore import Qt, QTimer, QPoint, QRect, QSettings
+                            QInputDialog, QMenu)
+from PyQt6.QtCore import Qt, QTimer, QPoint, QRect, QSettings, pyqtSignal, QObject
 from PyQt6.QtGui import QPixmap, QIcon, QAction, QCursor
 
 from common.protocol import Message, MessageType, AuthMessage, MouseEvent, KeyEvent
@@ -30,14 +30,21 @@ from common.file_transfer import FileTransfer
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Set to DEBUG to capture all messages
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('client.log'),
-        logging.StreamHandler()
+        logging.StreamHandler(),
+        logging.FileHandler('client_debug.log', mode='w')
     ]
 )
+
+# Set higher log level for PIL to reduce noise
+logging.getLogger('PIL').setLevel(logging.WARNING)
+
 logger = logging.getLogger('RemoteControlClient')
+
+class MessageSignal(QObject):
+    message_received = pyqtSignal(object, object)  # msg_type, data
 
 class RemoteControlClient(QMainWindow):
     """Main client application window."""
@@ -58,6 +65,10 @@ class RemoteControlClient(QMainWindow):
         self.last_mouse_pos = None
         self.security_manager = SecurityManager()
         self.file_transfer = FileTransfer()
+        
+        # Create signal handler
+        self.message_handler = MessageSignal()
+        self.message_handler.message_received.connect(self.process_message)
         
         self.init_ui()
         self.init_tray_icon()
@@ -291,8 +302,16 @@ class RemoteControlClient(QMainWindow):
     
     def authenticate(self):
         """Authenticate with the server."""
-        auth_msg = AuthMessage(self.username, self.password)
-        self.send_message(MessageType.AUTH, auth_msg.to_bytes())
+        try:
+            auth_data = {
+                'username': self.username,
+                'password': self.password
+            }
+            self.send_message(MessageType.AUTH, json.dumps(auth_data).encode('utf-8'))
+        except Exception as e:
+            logger.error(f"Authentication error: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to authenticate: {e}")
+            self.disconnect_from_server()
     
     def send_message(self, msg_type: MessageType, data: bytes):
         """Send a message to the server."""
@@ -308,51 +327,180 @@ class RemoteControlClient(QMainWindow):
     
     def receive_messages(self):
         """Receive messages from the server in a separate thread."""
+        logger.info("Starting message receiver thread")
         try:
-            while True:
-                # Receive message header (8 bytes: 4 for type, 4 for length)
-                header = self.client_socket.recv(8)
-                if not header:
-                    break
+            while self.client_socket and self.running:
+                try:
+                    # Set a timeout for the recv operation
+                    self.client_socket.settimeout(5.0)
                 
-                # Parse message
-                msg_type = MessageType(int.from_bytes(header[:4], byteorder='big'))
-                data_len = int.from_bytes(header[4:8], byteorder='big')
-                
-                # Receive message data
-                data = b''
-                while len(data) < data_len:
-                    chunk = self.client_socket.recv(min(4096, data_len - len(data)))
-                    if not chunk:
+                    # Receive message header (8 bytes: 4 for type, 4 for length)
+                    try:
+                        header = self.client_socket.recv(8)
+                        if not header:
+                            logger.info("Connection closed by server (empty header)")
+                            break
+                    except (ConnectionResetError, ConnectionAbortedError, OSError) as e:
+                        logger.info(f"Connection closed: {e}")
                         break
-                    data += chunk
+                    except socket.timeout:
+                        # Send keep-alive ping
+                        try:
+                            if self.client_socket:
+                                self.client_socket.sendall(Message(MessageType.INFO, b'').serialize())
+                                continue
+                        except:
+                            logger.error("Error sending keep-alive ping")
+                            break
+                        continue
                 
-                if len(data) != data_len:
-                    logger.warning("Incomplete message received")
+                    if len(header) < 8:
+                        logger.warning(f"Received incomplete header: {len(header)} bytes")
+                        continue
+                
+                    # Parse message type and length
+                    msg_type_int = int.from_bytes(header[:4], byteorder='big')
+                    data_len = int.from_bytes(header[4:8], byteorder='big')
+                    
+                    logger.debug(f"Received message - Type: {msg_type_int}, Length: {data_len}")
+                    
+                    # Validate message type
+                    try:
+                        msg_type = MessageType(msg_type_int)
+                        logger.debug(f"Processing message of type: {msg_type.name}")
+                    except ValueError as e:
+                        logger.error(f"Invalid message type received: {msg_type_int}, error: {e}")
+                        # Skip to next message
+                        if data_len > 0 and self.client_socket:
+                            try:
+                                remaining = data_len
+                                while remaining > 0:
+                                    chunk = self.client_socket.recv(min(4096, remaining))
+                                    if not chunk:
+                                        break
+                                    remaining -= len(chunk)
+                            except Exception as e:
+                                logger.error(f"Error discarding message data: {e}")
+                                break
+                            continue
+                    
+                    # Receive message data
+                    data = bytearray()
+                    bytes_received = 0
+                    while len(data) < data_len and self.client_socket:
+                        try:
+                            chunk = self.client_socket.recv(min(4096, data_len - len(data)))
+                            if not chunk:
+                                logger.warning("Connection closed while receiving data")
+                                break
+                            data.extend(chunk)
+                            bytes_received += len(chunk)
+                            logger.debug(f"Received {bytes_received}/{data_len} bytes")
+                        except socket.timeout:
+                            logger.warning("Timeout while receiving message data")
+                            continue
+                        except Exception as e:
+                            logger.error(f"Error receiving message data: {e}")
+                            break
+                    
+                    if len(data) != data_len:
+                        logger.warning(f"Incomplete message data: expected {data_len} bytes, got {len(data)}")
+                        continue
+                    
+                    # Emit signal to process message in the main thread
+                    logger.debug("Emitting message to main thread")
+                    self.message_handler.message_received.emit(msg_type, bytes(data))
+                    
+                except Exception as e:
+                    logger.error(f"Error processing message: {e}", exc_info=True)
+                    if 'data_len' in locals() and data_len > 0 and self.client_socket:
+                        try:
+                            remaining = data_len - len(data) if 'data' in locals() else data_len
+                            while remaining > 0:
+                                chunk = self.client_socket.recv(min(4096, remaining))
+                                if not chunk:
+                                    break
+                                remaining -= len(chunk)
+                        except Exception as e:
+                            logger.error(f"Error discarding remaining data: {e}")
+                            break
                     continue
-                
-                # Process message in the main thread
-                self.process_message(msg_type, data)
-                
-        except ConnectionResetError:
-            logger.info("Connection reset by server")
-        except Exception as e:
-            logger.error(f"Error receiving message: {e}")
-        finally:
+
+        except (ConnectionResetError, ConnectionAbortedError, OSError) as e:
+            logger.error(f"Connection error: {e}")
             self.disconnect_from_server()
-    
+            self.show_connection_dialog()
+        except Exception as e:
+            logger.error(f"Unexpected error in receive loop: {e}", exc_info=True)
+            self.disconnect_from_server()
+            self.show_connection_dialog()
+        finally:
+            logger.info("Message receiver thread exiting")
+
     def process_message(self, msg_type: MessageType, data: bytes):
         """Process a received message in the main thread."""
-        if msg_type == MessageType.AUTH_RESPONSE:
-            self.handle_auth_response(data)
-        elif msg_type == MessageType.SCREENSHOT:
-            self.update_screen(data)
-        elif msg_type == MessageType.FILE_TRANSFER:
-            self.handle_file_transfer(data)
-        elif msg_type == MessageType.INFO:
-            self.update_system_info(data)
-        elif msg_type == MessageType.ERROR:
-            self.show_error(data.decode('utf-8', errors='replace'))
+        try:
+            logger.debug(f"Processing message type: {msg_type}")
+            
+            if msg_type == MessageType.AUTH_RESPONSE:
+                try:
+                    response = json.loads(data.decode('utf-8'))
+                    success = response.get('success', False)
+                    message = response.get('message', '')
+                    
+                    if success:
+                        logger.info("Authentication successful")
+                        self.authenticated = True
+                        self.connected = True
+                        self.username = response.get('user', '')
+                        self.is_admin = response.get('is_admin', False)
+                        QMessageBox.information(self, "Success", "Authentication successful")
+                        self.update_ui_state()
+                        self.start_screen_updates()
+                    else:
+                        logger.warning(f"Authentication failed: {message}")
+                        QMessageBox.warning(self, "Authentication Failed", message or "Invalid credentials")
+                        self.disconnect_from_server()
+                        self.show_connection_dialog()
+                        
+                except Exception as e:
+                    logger.error(f"Error processing auth response: {e}")
+                    QMessageBox.critical(self, "Error", "Invalid authentication response from server")
+                    self.disconnect_from_server()
+                    self.show_connection_dialog()
+            
+            elif msg_type == MessageType.ERROR:
+                try:
+                    error_msg = data.decode('utf-8', errors='replace')
+                    logger.error(f"Server error: {error_msg}")
+                    QMessageBox.critical(self, "Server Error", error_msg)
+                except Exception as e:
+                    logger.error(f"Error processing error message: {e}")
+            
+            elif msg_type == MessageType.SCREENSHOT:
+                try:
+                    self.update_screen(data)
+                except Exception as e:
+                    logger.error(f"Error updating screen: {e}")
+            
+            elif msg_type == MessageType.FILE_TRANSFER:
+                try:
+                    self.handle_file_transfer(data)
+                except Exception as e:
+                    logger.error(f"Error handling file transfer: {e}")
+            
+            elif msg_type == MessageType.INFO:
+                try:
+                    self.update_system_info(data)
+                except Exception as e:
+                    logger.error(f"Error updating system info: {e}")
+            
+            else:
+                logger.warning(f"Unhandled message type: {msg_type}")
+                
+        except Exception as e:
+            logger.error(f"Unexpected error in process_message: {e}", exc_info=True)
+            QMessageBox.critical(self, "Error", f"Error processing message: {e}")
     
     def handle_auth_response(self, data: bytes):
         """Handle authentication response from server."""
