@@ -3,30 +3,40 @@ Remote Control Client
 
 Handles the GUI and connection to the remote control server.
 """
-import os
-import sys
 import json
-import socket
 import logging
+import os
+import socket
+import sys
 import threading
-import platform
+import time
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Any
 
-# Add parent directory to path for module imports
-sys.path.append(str(Path(__file__).parent.parent))
+from PyQt6.QtCore import (
+    Qt, QTimer, QMetaObject, Q_ARG, QUrl, QRect, QPoint, QSize,
+    QSettings, pyqtSignal, QObject
+)
+from PyQt6.QtGui import (
+    QPixmap, QDesktopServices, QAction, QIcon, QMouseEvent,
+    QKeyEvent, QPainter, QPen, QColor, QCursor
+)
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+    QTabWidget, QWidget, QMessageBox, QFileDialog, QSystemTrayIcon, QMenu,
+    QDialog, QLineEdit, QCheckBox, QDialogButtonBox, QFormLayout, QListWidget,
+    QStatusBar, QStyle, QSizePolicy, QScrollArea, QFrame, QSplitter, QToolBar,
+    QInputDialog, QMenuBar, QProgressBar
+)
 
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-                            QLabel, QLineEdit, QPushButton, QMessageBox, QTabWidget,
-                            QFileDialog, QListWidget, QSystemTrayIcon, QStyle, QStatusBar,
-                            QDialog, QDialogButtonBox, QFormLayout, QCheckBox, QProgressBar,
-                            QInputDialog, QMenu)
-from PyQt6.QtCore import Qt, QTimer, QPoint, QRect, QSettings, pyqtSignal, QObject
-from PyQt6.QtGui import QPixmap, QIcon, QAction, QCursor
-
-from common.protocol import Message, MessageType, AuthMessage, MouseEvent, KeyEvent
+# Import message types and other custom modules
+from common.messages import Message, MessageType
 from common.security import SecurityManager
 from common.file_transfer import FileTransfer
+from common.utils import setup_logger
+
+# Add parent directory to path for module imports
+sys.path.append(str(Path(__file__).parent.parent))
 
 # Configure logging
 logging.basicConfig(
@@ -54,6 +64,7 @@ class RemoteControlClient(QMainWindow):
         
         self.connected = False
         self.authenticated = False
+        self.running = False  # Add this line to control the receive thread
         self.client_socket = None
         self.receive_thread = None
         self.screen_timer = None
@@ -74,10 +85,77 @@ class RemoteControlClient(QMainWindow):
         self.init_tray_icon()
         self.show_connection_dialog()
     
+    def create_menu_bar(self):
+        """Create the application menu bar."""
+        menubar = self.menuBar()
+        
+        # Help menu
+        help_menu = menubar.addMenu("&Help")
+        
+        # Documentation action
+        docs_action = QAction("&Documentation", self)
+        docs_action.triggered.connect(self.show_documentation)
+        help_menu.addAction(docs_action)
+        
+        # About action
+        about_action = QAction("&About", self)
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
+        
+        # Sponsor action
+        sponsor_action = QAction("&Sponsor", self)
+        sponsor_action.triggered.connect(self.show_sponsor)
+        help_menu.addAction(sponsor_action)
+        
+        # Add separator
+        help_menu.addSeparator()
+        
+        # Version info
+        try:
+            from struttura import version
+            version_text = f"Version: {version.__version__}"
+            if hasattr(version, 'VERSION'):
+                version_text = f"Version: {version.VERSION}"
+            version_action = QAction(version_text, self)
+            version_action.setEnabled(False)
+            help_menu.addAction(version_action)
+        except ImportError:
+            pass
+    
+    def show_documentation(self):
+        """Open the documentation in the default web browser."""
+        QDesktopServices.openUrl(QUrl("https://github.com/Nsfr750/remote-control/wiki"))
+    
+    def show_about(self):
+        """Show the About dialog."""
+        try:
+            from struttura.about import AboutDialog
+            about_dialog = AboutDialog(self)
+            about_dialog.exec()
+        except ImportError as e:
+            QMessageBox.about(self, "About Remote Control", 
+                            "Remote Control Client\n\n"
+                            "A secure remote control application\n"
+                            "© 2024-2025 Nsfr750")
+    
+    def show_sponsor(self):
+        """Show the Sponsor dialog."""
+        try:
+            from struttura.sponsor import SponsorDialog
+            sponsor_dialog = SponsorDialog(self)
+            sponsor_dialog.exec()
+        except ImportError:
+            QMessageBox.information(self, "Sponsor", 
+                                 "Thank you for considering to sponsor this project!\n\n"
+                                 "Your support helps maintain and improve this software.")
+    
     def init_ui(self):
         """Initialize the user interface."""
         self.setWindowTitle("Remote Control Client")
         self.setMinimumSize(800, 600)
+        
+        # Create menu bar
+        self.create_menu_bar()
         
         # Main widget and layout
         self.main_widget = QWidget()
@@ -177,6 +255,9 @@ class RemoteControlClient(QMainWindow):
         self.tabs.addTab(self.remote_tab, "Remote Control")
         self.tabs.addTab(self.files_tab, "File Transfer")
         self.tabs.addTab(self.info_tab, "System Info")
+        
+        # Connect tab change signal
+        self.tabs.currentChanged.connect(self.on_tab_changed)
         
         # Status bar
         self.status_bar = QStatusBar()
@@ -289,6 +370,9 @@ class RemoteControlClient(QMainWindow):
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client_socket.connect((self.host, self.port))
             
+            # Set running flag before starting thread
+            self.running = True
+            
             # Start receive thread
             self.receive_thread = threading.Thread(target=self.receive_messages, daemon=True)
             self.receive_thread.start()
@@ -296,7 +380,11 @@ class RemoteControlClient(QMainWindow):
             # Send authentication
             self.authenticate()
             
+            # Update UI
+            self.status_bar.showMessage(f"Connecting to {self.host}:{self.port}...")
+            
         except Exception as e:
+            self.running = False
             QMessageBox.critical(self, "Connection Error", f"Failed to connect to server: {e}")
             self.show_connection_dialog()
     
@@ -328,103 +416,95 @@ class RemoteControlClient(QMainWindow):
     def receive_messages(self):
         """Receive messages from the server in a separate thread."""
         logger.info("Starting message receiver thread")
+        
         try:
-            while self.client_socket and self.running:
+            while self.running and self.client_socket:
                 try:
                     # Set a timeout for the recv operation
                     self.client_socket.settimeout(5.0)
                 
                     # Receive message header (8 bytes: 4 for type, 4 for length)
-                    try:
-                        header = self.client_socket.recv(8)
-                        if not header:
-                            logger.info("Connection closed by server (empty header)")
-                            break
-                    except (ConnectionResetError, ConnectionAbortedError, OSError) as e:
-                        logger.info(f"Connection closed: {e}")
-                        break
-                    except socket.timeout:
-                        # Send keep-alive ping
+                    header = b''
+                    while len(header) < 8 and self.running:
                         try:
-                            if self.client_socket:
-                                self.client_socket.sendall(Message(MessageType.INFO, b'').serialize())
-                                continue
-                        except:
-                            logger.error("Error sending keep-alive ping")
-                            break
-                        continue
-                
-                    if len(header) < 8:
-                        logger.warning(f"Received incomplete header: {len(header)} bytes")
-                        continue
-                
-                    # Parse message type and length
-                    msg_type_int = int.from_bytes(header[:4], byteorder='big')
-                    data_len = int.from_bytes(header[4:8], byteorder='big')
-                    
-                    logger.debug(f"Received message - Type: {msg_type_int}, Length: {data_len}")
-                    
-                    # Validate message type
-                    try:
-                        msg_type = MessageType(msg_type_int)
-                        logger.debug(f"Processing message of type: {msg_type.name}")
-                    except ValueError as e:
-                        logger.error(f"Invalid message type received: {msg_type_int}, error: {e}")
-                        # Skip to next message
-                        if data_len > 0 and self.client_socket:
-                            try:
-                                remaining = data_len
-                                while remaining > 0:
-                                    chunk = self.client_socket.recv(min(4096, remaining))
-                                    if not chunk:
-                                        break
-                                    remaining -= len(chunk)
-                            except Exception as e:
-                                logger.error(f"Error discarding message data: {e}")
+                            chunk = self.client_socket.recv(8 - len(header))
+                            if not chunk:
+                                logger.info("Server closed connection")
+                                self.running = False
+                                break
+                            header += chunk
+                        except socket.timeout:
+                            if not self.running:
                                 break
                             continue
                     
+                    if not self.running:
+                        break
+                        
+                    if len(header) < 8:
+                        logger.warning(f"Incomplete header received: {len(header)} bytes")
+                        continue
+                        
+                    # Parse message type and data length
+                    msg_type = int.from_bytes(header[0:4], byteorder='big')
+                    data_len = int.from_bytes(header[4:8], byteorder='big')
+                    
+                    if data_len > 10 * 1024 * 1024:  # 10MB max
+                        logger.error(f"Message too large: {data_len} bytes")
+                        break
+                        
                     # Receive message data
-                    data = bytearray()
-                    bytes_received = 0
-                    while len(data) < data_len and self.client_socket:
+                    data = b''
+                    while len(data) < data_len and self.running:
                         try:
                             chunk = self.client_socket.recv(min(4096, data_len - len(data)))
                             if not chunk:
                                 logger.warning("Connection closed while receiving data")
+                                self.running = False
                                 break
-                            data.extend(chunk)
-                            bytes_received += len(chunk)
-                            logger.debug(f"Received {bytes_received}/{data_len} bytes")
+                            data += chunk
                         except socket.timeout:
-                            logger.warning("Timeout while receiving message data")
+                            if not self.running:
+                                break
                             continue
-                        except Exception as e:
-                            logger.error(f"Error receiving message data: {e}")
+                        except (ConnectionResetError, ConnectionAbortedError) as e:
+                            logger.info(f"Connection closed while receiving data: {e}")
+                            self.running = False
                             break
                     
+                    if not self.running:
+                        break
+                        
                     if len(data) != data_len:
-                        logger.warning(f"Incomplete message data: expected {data_len} bytes, got {len(data)}")
+                        logger.warning(f"Incomplete data received: {len(data)}/{data_len} bytes")
                         continue
+                        
+                    # Process the message in the main thread
+                    QMetaObject.invokeMethod(
+                        self,
+                        "process_message",
+                        Qt.ConnectionType.QueuedConnection,
+                        Q_ARG(int, msg_type),  # Pass as int to avoid enum issues
+                        Q_ARG(bytes, data)
+                    )
                     
-                    # Emit signal to process message in the main thread
-                    logger.debug("Emitting message to main thread")
-                    self.message_handler.message_received.emit(msg_type, bytes(data))
-                    
+                except ConnectionResetError:
+                    logger.info("Connection reset by peer")
+                    break
+                except ConnectionAbortedError:
+                    logger.info("Connection aborted")
+                    break
+                except OSError as e:
+                    if e.errno == 10054:  # Connection reset by peer (WSAECONNRESET)
+                        logger.info("Connection reset by peer (WSAECONNRESET)")
+                    elif e.errno == 10053:  # Software caused connection abort (WSAECONNABORTED)
+                        logger.info("Connection aborted by software")
+                    else:
+                        logger.error(f"Socket error: {e}")
+                    break
                 except Exception as e:
-                    logger.error(f"Error processing message: {e}", exc_info=True)
-                    if 'data_len' in locals() and data_len > 0 and self.client_socket:
-                        try:
-                            remaining = data_len - len(data) if 'data' in locals() else data_len
-                            while remaining > 0:
-                                chunk = self.client_socket.recv(min(4096, remaining))
-                                if not chunk:
-                                    break
-                                remaining -= len(chunk)
-                        except Exception as e:
-                            logger.error(f"Error discarding remaining data: {e}")
-                            break
-                    continue
+                    logger.error(f"Error receiving message: {e}", exc_info=True)
+                    break
 
         except (ConnectionResetError, ConnectionAbortedError, OSError) as e:
             logger.error(f"Connection error: {e}")
@@ -444,30 +524,38 @@ class RemoteControlClient(QMainWindow):
             
             if msg_type == MessageType.AUTH_RESPONSE:
                 try:
+                    logger.debug(f"Raw AUTH_RESPONSE data: {data}")
                     response = json.loads(data.decode('utf-8'))
                     success = response.get('success', False)
                     message = response.get('message', '')
+                    
+                    logger.debug(f"Auth response - success: {success}, message: {message}")
                     
                     if success:
                         logger.info("Authentication successful")
                         self.authenticated = True
                         self.connected = True
-                        self.username = response.get('user', '')
+                        self.username = response.get('user', self.username)
                         self.is_admin = response.get('is_admin', False)
-                        QMessageBox.information(self, "Success", "Authentication successful")
+                        
+                        # Update UI in the main thread
+                        self.status_bar.showMessage(f"Connected as {self.username}")
                         self.update_ui_state()
-                        self.start_screen_updates()
+                        
+                        # Start screen updates after a short delay to ensure UI is updated
+                        QTimer.singleShot(100, self.start_screen_updates)
+                        
+                        # Request system info
+                        QTimer.singleShot(200, self.request_system_info)
                     else:
                         logger.warning(f"Authentication failed: {message}")
                         QMessageBox.warning(self, "Authentication Failed", message or "Invalid credentials")
                         self.disconnect_from_server()
-                        self.show_connection_dialog()
                         
                 except Exception as e:
-                    logger.error(f"Error processing auth response: {e}")
-                    QMessageBox.critical(self, "Error", "Invalid authentication response from server")
+                    logger.error(f"Error processing auth response: {e}", exc_info=True)
+                    QMessageBox.critical(self, "Error", f"Invalid authentication response: {str(e)}")
                     self.disconnect_from_server()
-                    self.show_connection_dialog()
             
             elif msg_type == MessageType.ERROR:
                 try:
@@ -560,30 +648,72 @@ class RemoteControlClient(QMainWindow):
         """Update the system info tab with received data."""
         try:
             info = json.loads(data.decode('utf-8'))
-            info_text = "<h3>System Information</h3>"
+            info_text = """
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 15px; }
+                    h3 { color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                    .section { margin-bottom: 15px; }
+                    .section-title { 
+                        color: #3498db; 
+                        font-weight: bold; 
+                        margin: 10px 0 5px 0;
+                    }
+                    .info-item { margin: 3px 0; }
+                    .info-label { font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                <h3>System Information</h3>
+            """
             
-            for key, value in info.items():
-                if isinstance(value, dict):
-                    info_text += f"<b>{key}:</b><br>"
-                    for k, v in value.items():
-                        info_text += f"  {k}: {v}<br>"
+            # Process each section
+            for section, content in info.items():
+                info_text += f'<div class="section">\n'
+                info_text += f'<div class="section-title">{section.replace("_", " ").title()}</div>\n'
+                if isinstance(content, dict):
+                    for key, value in content.items():
+                        if isinstance(value, (dict, list)):
+                            value = json.dumps(value, indent=2)
+                        info_text += f'<div class="info-item"><span class="info-label">{key.replace("_", " ").title()}:</span> {value}</div>\n'
+                elif isinstance(content, list):
+                    for item in content:
+                        info_text += f'<div class="info-item">• {str(item)}</div>\n'
                 else:
-                    info_text += f"<b>{key}:</b> {value}<br>"
+                    info_text += f'<div class="info-item">{str(content)}</div>\n'
+                info_text += '</div>\n'
+            info_text += """
+            </body>
+            </html>
+            """
             
             self.info_text.setText(info_text)
+            
         except Exception as e:
-            logger.error(f"Error updating system info: {e}")
+            error_msg = f"Error updating system info: {str(e)}"
+            logger.error(error_msg)
+            self.info_text.setText(f"<div style='color: red;'>{error_msg}</div>")
     
     def show_error(self, message: str):
         """Show an error message to the user."""
         QMessageBox.critical(self, "Error", message)
     
     def start_screen_updates(self):
-        """Start periodic screen updates."""
-        if self.screen_timer is None:
-            self.screen_timer = QTimer()
+        """Start receiving screen updates from the server."""
+        if not self.connected or not self.authenticated:
+            logger.warning("Cannot start screen updates: not connected or not authenticated")
+            return
+            
+        if not self.screen_timer:
+            self.screen_timer = QTimer(self)
             self.screen_timer.timeout.connect(self.request_screen_update)
-            self.screen_timer.start(100)  # 10 FPS
+        
+        if not self.screen_timer.isActive():
+            logger.info("Starting screen updates")
+            self.screen_timer.start(100)  # Request updates every 100ms
+            # Request the first update immediately
+            QTimer.singleShot(50, self.request_screen_update)
     
     def stop_screen_updates(self):
         """Stop periodic screen updates."""
@@ -599,7 +729,13 @@ class RemoteControlClient(QMainWindow):
     def request_system_info(self):
         """Request system information from the server."""
         if self.connected and self.authenticated:
+            self.info_text.setText("<h3>Requesting system information...</h3>")
             self.send_message(MessageType.INFO, b'')
+    
+    def on_tab_changed(self, index):
+        """Handle tab change events."""
+        if self.tabs.tabText(index) == "System Info" and self.connected and self.authenticated:
+            self.request_system_info()
     
     def toggle_connection(self):
         """Toggle connection to the server."""
@@ -610,8 +746,8 @@ class RemoteControlClient(QMainWindow):
     
     def disconnect_from_server(self):
         """Disconnect from the server."""
-        self.connected = False
-        self.authenticated = False
+        # Signal the receive thread to stop
+        self.running = False
         
         # Stop screen updates
         self.stop_screen_updates()
@@ -619,10 +755,25 @@ class RemoteControlClient(QMainWindow):
         # Close socket
         if self.client_socket:
             try:
+                self.client_socket.shutdown(socket.SHUT_RDWR)
                 self.client_socket.close()
-            except:
-                pass
-            self.client_socket = None
+            except Exception as e:
+                logger.debug(f"Error closing socket: {e}")
+            finally:
+                self.client_socket = None
+        
+        # Wait for the receive thread to finish
+        if self.receive_thread and self.receive_thread.is_alive():
+            try:
+                self.receive_thread.join(timeout=2.0)
+                if self.receive_thread.is_alive():
+                    logger.warning("Receive thread did not terminate gracefully")
+            except Exception as e:
+                logger.error(f"Error joining receive thread: {e}")
+        
+        # Reset connection state
+        self.connected = False
+        self.authenticated = False
         
         # Update UI
         self.update_ui_state()
