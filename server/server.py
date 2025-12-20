@@ -362,6 +362,79 @@ class RemoteControlServer:
             with open('/proc/uptime', 'r') as f:
                 return float(f.readline().split()[0])
 
+    def _handle_mouse_move(self, data: bytes) -> Tuple[MessageType, bytes]:
+        """Handle mouse movement event."""
+        try:
+            if not self.input_controller:
+                return MessageType.ERROR, b"Input controller not available"
+                
+            # Parse mouse event data
+            mouse_event = MouseEvent.from_bytes(data)
+            
+            # Move the mouse
+            success = self.input_controller.send_mouse_move(mouse_event.x, mouse_event.y)
+            if not success:
+                return MessageType.ERROR, b"Failed to move mouse"
+                
+            return MessageType.INFO, b"Mouse moved successfully"
+            
+        except Exception as e:
+            logger.error(f"Error handling mouse move: {e}")
+            return MessageType.ERROR, f"Failed to handle mouse move: {e}".encode('utf-8')
+
+    def _handle_mouse_click(self, data: bytes) -> Tuple[MessageType, bytes]:
+        """Handle mouse click event."""
+        try:
+            if not self.input_controller:
+                return MessageType.ERROR, b"Input controller not available"
+                
+            # Parse mouse event data
+            mouse_event = MouseEvent.from_bytes(data)
+            
+            # Map button number to button name
+            button_map = {0: 'left', 1: 'middle', 2: 'right'}
+            button = button_map.get(mouse_event.button, 'left')
+            
+            # Perform the click
+            success = self.input_controller.send_mouse_click(
+                mouse_event.x, 
+                mouse_event.y, 
+                button=button,
+                double=False  # Single click
+            )
+            
+            if not success:
+                return MessageType.ERROR, b"Failed to perform mouse click"
+                
+            return MessageType.INFO, b"Mouse click performed successfully"
+            
+        except Exception as e:
+            logger.error(f"Error handling mouse click: {e}")
+            return MessageType.ERROR, f"Failed to handle mouse click: {e}".encode('utf-8')
+
+    def _handle_key_event(self, data: bytes) -> Tuple[MessageType, bytes]:
+        """Handle keyboard event."""
+        try:
+            if not self.input_controller:
+                return MessageType.ERROR, b"Input controller not available"
+                
+            # Parse key event data
+            key_event = KeyEvent.from_bytes(data)
+            
+            # Send the key press/release
+            # Note: The key event contains a 'pressed' flag, but our current input controller
+            # combines press and release. We'll need to update the input controller to support this.
+            if key_event.pressed:  # Only handle key presses for now
+                success = self.input_controller.send_key_press(key_event.key)
+                if not success:
+                    return MessageType.ERROR, b"Failed to send key press"
+            
+            return MessageType.INFO, b"Key event handled successfully"
+            
+        except Exception as e:
+            logger.error(f"Error handling key event: {e}")
+            return MessageType.ERROR, f"Failed to handle key event: {e}".encode('utf-8')
+
     def _handle_auth(self, data: bytes, client_id: str) -> Tuple[MessageType, bytes]:
         """Handle authentication."""
         try:
