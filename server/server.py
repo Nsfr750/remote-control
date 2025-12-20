@@ -69,12 +69,8 @@ class RemoteControlServer:
     def _get_screen_controller(self):
         """Get the appropriate screen controller for the platform."""
         try:
-            if self.platform == 'windows':
-                from platform.windows.screen import WindowsScreenCapture as WindowsScreenController
-                return WindowsScreenController()
-            else:
-                from platform.linux.screen import LinuxScreenCapture as LinuxScreenController
-                return LinuxScreenController()
+            from server.screen import ScreenController
+            return ScreenController()
         except ImportError as e:
             logger.error(f"Failed to load screen controller: {e}")
             return None

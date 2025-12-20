@@ -133,7 +133,7 @@ class AboutDialog(QDialog):
         app_info = QVBoxLayout()
         
         # Application title
-        title = QLabel("OpenPGP")
+        title = QLabel("RemoteControl")
         title.setStyleSheet("""
             font-size: 24px; 
             font-weight: bold;

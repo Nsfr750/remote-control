@@ -98,6 +98,79 @@ class HelpDialog(QDialog):
         button_box.addWidget(self.close_btn)
         main_layout.addLayout(button_box)
     
+    def _create_encryption_tab(self):
+        """Create the encryption tab."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        text = """
+        <h2>Remote Control Features</h2>
+        
+        <h3>🔒 Secure Remote Access</h3>
+        <p>Securely connect to and control remote computers with end-to-end encryption.</p>
+        
+        <h3>🖱️ Remote Control</h3>
+        <ul>
+            <li>Mouse and keyboard control of remote systems</li>
+            <li>Multi-monitor support</li>
+            <li>Clipboard sharing</li>
+            <li>File transfer between systems</li>
+        </ul>
+        
+        <h3>🔐 Security Features</h3>
+        <ul>
+            <li>End-to-end encryption for all communications</li>
+            <li>Authentication using username/password</li>
+            <li>Secure file transfer with integrity checking</li>
+            <li>Session logging and auditing</li>
+        </ul>
+        
+        <h3>Getting Started</h3>
+        <ol>
+            <li>Start the server on the remote computer</li>
+            <li>Connect using the client with the correct credentials</li>
+            <li>Begin your remote session</li>
+        </ol>
+        """
+        
+        text_browser = QTextBrowser()
+        text_browser.setOpenExternalLinks(True)
+        text_browser.setHtml(text)
+        
+        layout.addWidget(text_browser)
+        return widget
+        
+    def _create_decryption_tab(self):
+        """Create the decryption tab (duplicate of encryption tab for now)."""
+        return self._create_encryption_tab()
+        
+    def _create_keys_tab(self):
+        """Create the keys tab."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        text = """
+        <h2>Key Management</h2>
+        
+        <h3>Authentication Keys</h3>
+        <p>Manage your authentication keys for secure connections.</p>
+        
+        <h3>Key Features</h3>
+        <ul>
+            <li>Generate new key pairs</li>
+            <li>Import/export public keys</li>
+            <li>Key revocation and rotation</li>
+            <li>Key usage statistics</li>
+        </ul>
+        """
+        
+        text_browser = QTextBrowser()
+        text_browser.setOpenExternalLinks(True)
+        text_browser.setHtml(text)
+        
+        layout.addWidget(text_browser)
+        return widget
+        
     def _create_welcome_tab(self):
         """Create the welcome tab."""
         widget = QWidget()
