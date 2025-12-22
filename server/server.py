@@ -82,7 +82,7 @@ class RemoteControlServer:
                 from platform.windows.input import WindowsInputHandler as WindowsInputController
                 return WindowsInputController()
             else:
-                from platform.linux.input import LinuxInputHandler as LinuxInputController
+                from server.platform.linux.input import LinuxInputHandler as LinuxInputController
                 return LinuxInputController()
         except ImportError as e:
             logger.error(f"Failed to load input controller: {e}")

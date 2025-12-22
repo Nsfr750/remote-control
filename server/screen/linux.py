@@ -26,16 +26,34 @@ class HeadlessScreenController:
         logging.info("Initialized headless screen controller")
     
     def capture_screen(self, region=None):
-        """Return a blank black image for headless environments."""
-        if region:
-            width = min(region[2], self.width)
-            height = min(region[3], self.height)
-        else:
-            width, height = self.width, self.height
+        """Return a blank black image as JPEG bytes for headless environments."""
+        try:
+            if region:
+                width = min(region[2], self.width)
+                height = min(region[3], self.height)
+            else:
+                width, height = self.width, self.height
+                
+            # Create a black image
+            img_array = np.zeros((height, width, 3), dtype=np.uint8)
+            img = Image.fromarray(img_array, 'RGB')
             
-        # Create a black image
-        img_array = np.zeros((height, width, 3), dtype=np.uint8)
-        return Image.fromarray(img_array, 'RGB')
+            # Convert to bytes
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format='JPEG')
+            return img_byte_arr.getvalue()
+            
+        except Exception as e:
+            logging.error(f"Error in headless screen capture: {e}")
+            # Return a minimal black image (1x1 pixel) as fallback
+            img = Image.new('RGB', (1, 1), (0, 0, 0))
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format='JPEG')
+            return img_byte_arr.getvalue()
+            
+    def get_screen_size(self):
+        """Return the screen dimensions."""
+        return self.width, self.height
     
     def get_screen_size(self):
         """Return the default screen size."""
@@ -79,7 +97,7 @@ class LinuxScreenController:
             self.width, self.height = self._headless_controller.get_screen_size()
     
     def capture_screen(self, region=None):
-        """Capture a screenshot of the screen or specified region."""
+        """Capture a screenshot of the screen or specified region and return as JPEG bytes."""
         if self.headless:
             return self._headless_controller.capture_screen(region)
             
@@ -101,7 +119,11 @@ class LinuxScreenController:
                 X.ZPixmap, 0xffffffff
             )
             
-            # Convert to PIL Image
+            # Convert to PIL Image and then to JPEG bytes
+            img = Image.frombytes("RGB", (width, height), raw.data, "raw", "BGRX")
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format='JPEG')
+            return img_byte_arr.getvalue()
             img = Image.frombuffer(
                 'RGB', (width, height),
                 raw.data, 'raw', 'BGRX', 0, 1
