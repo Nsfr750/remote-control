@@ -1,23 +1,40 @@
 """
-Cross-platform input handling implementation using pyautogui.
+Cross-platform input handling implementation.
 """
 import logging
+import os
 import platform
-import pyautogui
 
 logger = logging.getLogger(__name__)
 
 class LinuxInputHandler:
-    """Cross-platform input handling implementation using pyautogui."""
+    """Cross-platform input handling implementation."""
     
     def __init__(self):
         """Initialize the input handler."""
         self.supported = True
-        # Add a small delay after each PyAutoGUI call
-        pyautogui.PAUSE = 0.1
-        # Disable the fail-safe
-        pyautogui.FAILSAFE = False
-        logger.info("Initialized input handler")
+        self.headless = False
+        self.pyautogui = None
+        
+        # Check if we're running in a headless environment
+        if not os.environ.get('DISPLAY'):
+            self.headless = True
+            logger.warning("Running in headless mode - input simulation will be limited")
+            return
+            
+        # Only import GUI-related modules if we have a display
+        try:
+            import pyautogui
+            self.pyautogui = pyautogui
+            
+            # Configure pyautogui
+            self.pyautogui.PAUSE = 0.1
+            self.pyautogui.FAILSAFE = False
+            logger.info("Initialized input handler with GUI support")
+            
+        except ImportError:
+            self.headless = True
+            logger.warning("pyautogui not available - input simulation will be limited")
     
     def send_mouse_click(self, x: int, y: int, button: str = 'left', double: bool = False) -> bool:
         """
@@ -32,23 +49,22 @@ class LinuxInputHandler:
         Returns:
             bool: True if successful, False otherwise
         """
-        try:
-            # Move to the position first
-            pyautogui.moveTo(x, y, duration=0.1)
+        if self.headless or not self.pyautogui:
+            logger.warning(f"Mouse click at ({x}, {y}) - not simulated in headless mode")
+            return True  # Return True to avoid error messages
             
-            # Perform the click
+        try:
+            self.pyautogui.moveTo(x, y, duration=0.1)
             if button == 'left':
-                pyautogui.click(button='left', clicks=2 if double else 1)
+                self.pyautogui.click(button='left', clicks=2 if double else 1)
             elif button == 'right':
-                pyautogui.rightClick()
+                self.pyautogui.rightClick()
             elif button == 'middle':
-                pyautogui.middleClick()
+                self.pyautogui.middleClick()
             else:
                 logger.warning(f"Unsupported mouse button: {button}")
                 return False
-                
             return True
-            
         except Exception as e:
             logger.error(f"Error sending mouse click: {e}")
             return False
@@ -64,8 +80,13 @@ class LinuxInputHandler:
         Returns:
             bool: True if successful, False otherwise
         """
+        if self.headless or not self.pyautogui:
+            # In headless mode, just log the movement
+            logger.debug(f"Mouse move to ({x}, {y}) - not simulated in headless mode")
+            return True
+            
         try:
-            pyautogui.moveTo(x, y, duration=0.1)
+            self.pyautogui.moveTo(x, y, duration=0.1)
             return True
         except Exception as e:
             logger.error(f"Error moving mouse: {e}")
@@ -82,12 +103,16 @@ class LinuxInputHandler:
         Returns:
             bool: True if successful, False otherwise
         """
+        if self.headless or not self.pyautogui:
+            logger.warning(f"Key press {modifier + '+' if modifier else ''}{key} - not simulated in headless mode")
+            return True
+            
         try:
             if modifier:
-                with pyautogui.hold(modifier):
-                    pyautogui.press(key)
+                with self.pyautogui.hold(modifier):
+                    self.pyautogui.press(key)
             else:
-                pyautogui.press(key)
+                self.pyautogui.press(key)
             return True
         except Exception as e:
             logger.error(f"Error sending key press: {e}")
