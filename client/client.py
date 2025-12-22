@@ -1113,8 +1113,16 @@ class RemoteControlClient(QMainWindow):
         
         # Send mouse move event
         if self.dragging and self.last_mouse_pos and (pos - self.last_mouse_pos).manhattanLength() > 1:
-            mouse_event = MouseEvent(pos.x(), pos.y(), 0, False)  # Button 0 for move
-            self.send_message(MessageType.MOUSE_MOVE, mouse_event.to_bytes())
+            # Create a dictionary for the mouse move event
+            mouse_event = {
+                'x': pos.x(),
+                'y': pos.y(),
+                'dx': pos.x() - self.last_mouse_pos.x(),  # Delta X
+                'dy': pos.y() - self.last_mouse_pos.y()   # Delta Y
+            }
+            
+            # Convert to bytes and send
+            self.send_message(MessageType.MOUSE_MOVE, json.dumps(mouse_event).encode('utf-8'))
             self.last_mouse_pos = pos
         
         # Update selection rectangle if dragging

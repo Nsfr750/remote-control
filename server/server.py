@@ -364,15 +364,22 @@ class RemoteControlServer:
             if not self.input_controller:
                 return MessageType.ERROR, b"Input controller not available"
                 
-            # Parse mouse event data
-            mouse_event = MouseEvent.from_bytes(data)
+            # Parse JSON data
+            try:
+                mouse_data = json.loads(data.decode('utf-8'))
+                x = mouse_data['x']
+                y = mouse_data['y']
+                # dx and dy are available but not used in the current implementation
+            except (json.JSONDecodeError, KeyError) as e:
+                logger.error(f"Failed to parse mouse move event: {e}")
+                return MessageType.ERROR, f"Invalid mouse move data: {e}".encode('utf-8')
             
             # Move the mouse
-            success = self.input_controller.send_mouse_move(mouse_event.x, mouse_event.y)
+            success = self.input_controller.send_mouse_move(x, y)
             if not success:
                 return MessageType.ERROR, b"Failed to move mouse"
                 
-            return MessageType.INFO, b"Mouse moved successfully"
+            return MessageType.SUCCESS, b"Mouse moved successfully"
             
         except Exception as e:
             logger.error(f"Error handling mouse move: {e}")
