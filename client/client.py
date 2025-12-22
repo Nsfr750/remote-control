@@ -17,6 +17,11 @@ import threading
 import time
 from typing import Dict, Optional, Tuple, Any
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.debug("Starting Remote Control Client")
+
 # Qt imports
 from PyQt6.QtCore import (
     Qt, QTimer, QMetaObject, Q_ARG, QUrl, QRect, QPoint, QSize,
@@ -76,7 +81,12 @@ class RemoteControlClient(QMainWindow):
     """Main client application window."""
     
     def __init__(self):
+        """Initialize the client application."""
+        logger.debug("Initializing RemoteControlClient")
         super().__init__()
+        
+        # Debug window creation
+        logger.debug(f"Window created, object: {self}")
         
         self.connected = False
         self.authenticated = False
@@ -101,9 +111,18 @@ class RemoteControlClient(QMainWindow):
         self.message_handler = MessageSignal()
         self.message_handler.message_received.connect(self.process_message)
         
+        logger.debug("Initializing UI components")
         self.init_ui()
+        logger.debug("Initializing tray icon")
         self.init_tray_icon()
+        
+        logger.debug("Showing connection dialog")
         self.show_connection_dialog()
+        
+        # Debug window visibility
+        logger.debug(f"Window visible after init: {self.isVisible()}")
+        logger.debug(f"Window geometry: {self.geometry()}")
+        logger.debug(f"Screen: {QApplication.primaryScreen().name()}")
     
     def create_menu_bar(self):
         """Create the application menu bar."""
@@ -774,26 +793,33 @@ class RemoteControlClient(QMainWindow):
     def update_screen(self, image_data: bytes):
         """Update the screen with the received image."""
         try:
-            # Convert bytes to QImage
-            image = QImage()
-            image.loadFromData(image_data, "JPEG")
-        
-            if image.isNull():
+            logger.debug(f"Received image data: {len(image_data)} bytes")
+            logger.debug(f"Window visible: {self.isVisible()}")
+            if hasattr(self, 'screen_label'):
+                logger.debug(f"Screen label size: {self.screen_label.size().width()}x{self.screen_label.size().height()}")
+            
+            # Create QPixmap directly from image data
+            pixmap = QPixmap()
+            if not pixmap.loadFromData(image_data, "JPEG"):
                 logger.error("Failed to load image from received data")
                 return
-            
-            # Convert to QPixmap for display
-            pixmap = QPixmap.fromImage(image)
+                
+            logger.debug(f"Pixmap size: {pixmap.size().width()}x{pixmap.size().height()}")
             self.current_screen = pixmap
         
             # Scale and update the label
-            self.screen_label.setPixmap(
-                pixmap.scaled(
+            if hasattr(self, 'screen_label'):
+                scaled_pixmap = pixmap.scaled(
                     self.screen_label.size(),
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation
                 )
-            )
+                logger.debug(f"Scaled pixmap size: {scaled_pixmap.size().width()}x{scaled_pixmap.size().height()}")
+                self.screen_label.setPixmap(scaled_pixmap)
+                logger.debug("Screen updated successfully")
+            else:
+                logger.error("screen_label not found in the UI")
+                
         except Exception as e:
             logger.error(f"Error updating screen: {e}", exc_info=True)
     
@@ -1016,9 +1042,16 @@ class RemoteControlClient(QMainWindow):
         elif event.button() == Qt.MouseButton.MiddleButton:
             button = 1
         
-        # Send mouse down event
-        mouse_event = MouseEvent(pos.x(), pos.y(), button, True)
-        self.send_message(MessageType.MOUSE_CLICK, mouse_event.to_bytes())
+        # Create a dictionary for the mouse event
+        mouse_event = {
+            'x': pos.x(),
+            'y': pos.y(),
+            'button': button,
+            'pressed': True
+        }
+        
+        # Convert to bytes and send
+        self.send_message(MessageType.MOUSE_CLICK, json.dumps(mouse_event).encode('utf-8'))
         
         # Start dragging
         self.dragging = True
@@ -1045,9 +1078,16 @@ class RemoteControlClient(QMainWindow):
         elif event.button() == Qt.MouseButton.MiddleButton:
             button = 1
         
-        # Send mouse up event
-        mouse_event = MouseEvent(pos.x(), pos.y(), button, False)
-        self.send_message(MessageType.MOUSE_CLICK, mouse_event.to_bytes())
+        # Create a dictionary for the mouse event
+        mouse_event = {
+            'x': pos.x(),
+            'y': pos.y(),
+            'button': button,
+            'pressed': False
+        }
+        
+        # Convert to bytes and send
+        self.send_message(MessageType.MOUSE_CLICK, json.dumps(mouse_event).encode('utf-8'))
         
         # Stop dragging
         self.dragging = False
@@ -1148,21 +1188,28 @@ class RemoteControlClient(QMainWindow):
         """Create a new folder on the remote server."""
         folder_name, ok = QInputDialog.getText(self, "New Folder", "Enter folder name:")
         if ok and folder_name:
-            # In a real app, you would implement the create folder logic here
+            # In a real app, you would implement the folder creation logic here
             QMessageBox.information(self, "New Folder", f"Would create folder: {folder_name}")
 
 def main():
     """Main entry point for the client application."""
+    import sys
+    from PyQt6.QtWidgets import QApplication
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Set up application
     app = QApplication(sys.argv)
+    app.setStyle('Fusion')  # Use Fusion style for consistent look
     
-    # Set application style
-    app.setStyle('Fusion')
+    # Create and show main window
+    logger.debug("Creating main window")
+    window = RemoteControlClient()
+    window.show()
+    window.raise_()  # Bring window to front
+    window.activateWindow()  # Activate the window
     
-    # Create and show the main window
-    client = RemoteControlClient()
-    client.show()
-    
-    # Run the application
+    logger.debug("Starting application event loop")
     sys.exit(app.exec())
 
 if __name__ == "__main__":
