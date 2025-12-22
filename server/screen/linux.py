@@ -149,5 +149,8 @@ class LinuxScreenController:
     
     def __del__(self):
         """Clean up resources."""
-        if hasattr(self, 'display'):
-            self.display.close()
+        if hasattr(self, 'display') and self.display is not None:
+            try:
+                self.display.close()
+            except:
+                pass  # Ignore any errors during cleanup
