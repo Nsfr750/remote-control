@@ -384,20 +384,26 @@ class RemoteControlServer:
             if not self.input_controller:
                 return MessageType.ERROR, b"Input controller not available"
                 
-            # Parse mouse event data
-            mouse_event = MouseEvent.from_bytes(data)
+            # Parse JSON data
+            try:
+                mouse_data = json.loads(data.decode('utf-8'))
+                x = mouse_data['x']
+                y = mouse_data['y']
+                button = mouse_data['button']  # 0=left, 1=middle, 2=right
+                pressed = mouse_data['pressed']  # True for press, False for release
+            except (json.JSONDecodeError, KeyError) as e:
+                logger.error(f"Failed to parse mouse event: {e}")
+                return MessageType.ERROR, f"Invalid mouse event data: {e}".encode('utf-8')
             
             # Map button number to button name
             button_map = {0: 'left', 1: 'middle', 2: 'right'}
-            button = button_map.get(mouse_event.button, 'left')
+            button_name = button_map.get(button, 'left')
             
-            # Perform the click
-            success = self.input_controller.send_mouse_click(
-                mouse_event.x, 
-                mouse_event.y, 
-                button=button,
-                double=False  # Single click
-            )
+            # Perform the click or release
+            if pressed:
+                success = self.input_controller.mouse_down(x, y, button_name)
+            else:
+                success = self.input_controller.mouse_up(x, y, button_name)
             
             if not success:
                 return MessageType.ERROR, b"Failed to perform mouse click"
