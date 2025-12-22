@@ -774,20 +774,28 @@ class RemoteControlClient(QMainWindow):
     def update_screen(self, image_data: bytes):
         """Update the screen with the received image."""
         try:
-            pixmap = QPixmap()
-            pixmap.loadFromData(image_data)
+            # Convert bytes to QImage
+            image = QImage()
+            image.loadFromData(image_data, "JPEG")
+        
+            if image.isNull():
+                logger.error("Failed to load image from received data")
+                return
             
-            if not pixmap.isNull():
-                self.current_screen = pixmap
-                self.screen_label.setPixmap(
-                    pixmap.scaled(
-                        self.screen_label.size(),
-                        Qt.AspectRatioMode.KeepAspectRatio,
-                        Qt.TransformationMode.SmoothTransformation
-                    )
+            # Convert to QPixmap for display
+            pixmap = QPixmap.fromImage(image)
+            self.current_screen = pixmap
+        
+            # Scale and update the label
+            self.screen_label.setPixmap(
+                pixmap.scaled(
+                    self.screen_label.size(),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
                 )
+            )
         except Exception as e:
-            logger.error(f"Error updating screen: {e}")
+            logger.error(f"Error updating screen: {e}", exc_info=True)
     
     def handle_file_transfer(self, data: bytes):
         """Handle file transfer data from server."""
