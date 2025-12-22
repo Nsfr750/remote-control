@@ -997,14 +997,54 @@ class RemoteControlClient(QMainWindow):
         self.btn_new_folder.setEnabled(connected)
     
     def closeEvent(self, event):
-        """Handle window close event."""
-        # Hide the window instead of closing it
-        if self.tray_icon.isVisible():
+        """Handle window close event with proper cleanup."""
+        logger.info("Application closing, cleaning up resources...")
+        
+        # Disconnect from server if connected
+        if self.connected:
+            self.disconnect_from_server(show_message=False)
+        
+        # Stop the message receiver thread
+        if hasattr(self, 'message_receiver') and self.message_receiver.isRunning():
+            logger.debug("Stopping message receiver thread...")
+            self.running = False
+            self.message_receiver.running = False
+            self.message_receiver.wait(2000)  # Wait up to 2 seconds for the thread to finish
+            
+        # Stop any active timers
+        if hasattr(self, 'screen_timer') and self.screen_timer is not None and hasattr(self.screen_timer, 'isActive') and self.screen_timer.isActive():
+            logger.debug("Stopping screen update timer...")
+            try:
+                self.screen_timer.stop()
+            except Exception as e:
+                logger.error(f"Error stopping screen timer: {e}")
+            
+        if hasattr(self, 'keepalive_timer') and self.keepalive_timer is not None and hasattr(self.keepalive_timer, 'isActive') and self.keepalive_timer.isActive():
+            logger.debug("Stopping keepalive timer...")
+            try:
+                self.keepalive_timer.stop()
+            except Exception as e:
+                logger.error(f"Error stopping keepalive timer: {e}")
+        
+        # Close the socket if it's still open
+        if hasattr(self, 'client_socket') and self.client_socket:
+            try:
+                logger.debug("Closing client socket...")
+                self.client_socket.close()
+            except Exception as e:
+                logger.error(f"Error closing socket: {e}")
+        
+        # Hide the window if tray icon is visible
+        if hasattr(self, 'tray_icon') and self.tray_icon.isVisible():
+            logger.debug("Hiding window to tray...")
             self.hide()
             event.ignore()
         else:
-            self.disconnect_from_server()
+            logger.debug("Closing application...")
             event.accept()
+        
+        logger.info("Application cleanup complete")
+        QApplication.quit()  # Ensure the application quits completely
     
     def tray_icon_activated(self, reason):
         """Handle tray icon activation."""
@@ -1089,14 +1129,12 @@ class RemoteControlClient(QMainWindow):
         # Convert to bytes and send
         self.send_message(MessageType.MOUSE_CLICK, json.dumps(mouse_event).encode('utf-8'))
         
-        # Stop dragging
+        # Stop dragging and clean up
         self.dragging = False
         self.drag_start_pos = None
         self.last_mouse_pos = None
-        
-        # Clear selection rectangle
         self.selection_rect = None
-        self.update()
+        self.update()  # Clear the selection rectangle
         
         # Request immediate screen update
         self.request_screen_update()
