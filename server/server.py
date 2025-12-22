@@ -399,17 +399,21 @@ class RemoteControlServer:
             button_map = {0: 'left', 1: 'middle', 2: 'right'}
             button_name = button_map.get(button, 'left')
             
-            # Perform the click or release
-            if pressed:
-                success = self.input_controller.mouse_down(x, y, button_name)
-            else:
-                success = self.input_controller.mouse_up(x, y, button_name)
-            
-            if not success:
-                return MessageType.ERROR, b"Failed to perform mouse click"
+            # For Linux, we'll use send_mouse_click for both press and release
+            # since the LinuxInputHandler doesn't support separate down/up events
+            if pressed:  # Only send the click on press, not on release
+                success = self.input_controller.send_mouse_click(
+                    x, 
+                    y, 
+                    button=button_name,
+                    double=False  # Single click
+                )
                 
-            return MessageType.INFO, b"Mouse click performed successfully"
-            
+                if not success:
+                    return MessageType.ERROR, b"Failed to send mouse click"
+                    
+            return MessageType.SUCCESS, b"Mouse click handled"
+                
         except Exception as e:
             logger.error(f"Error handling mouse click: {e}")
             return MessageType.ERROR, f"Failed to handle mouse click: {e}".encode('utf-8')
