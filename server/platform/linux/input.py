@@ -1,17 +1,23 @@
 """
-Linux-specific input handling implementation.
+Cross-platform input handling implementation using pyautogui.
 """
 import logging
+import platform
+import pyautogui
 
 logger = logging.getLogger(__name__)
 
 class LinuxInputHandler:
-    """Linux-specific input handling implementation."""
+    """Cross-platform input handling implementation using pyautogui."""
     
     def __init__(self):
-        """Initialize the Linux input handler."""
-        logger.warning("Linux input handling is not supported on Windows")
-        self.supported = False
+        """Initialize the input handler."""
+        self.supported = True
+        # Add a small delay after each PyAutoGUI call
+        pyautogui.PAUSE = 0.1
+        # Disable the fail-safe
+        pyautogui.FAILSAFE = False
+        logger.info("Initialized input handler")
     
     def send_mouse_click(self, x: int, y: int, button: str = 'left', double: bool = False) -> bool:
         """
@@ -26,8 +32,26 @@ class LinuxInputHandler:
         Returns:
             bool: True if successful, False otherwise
         """
-        logger.warning("Linux input handling is not supported on Windows")
-        return False
+        try:
+            # Move to the position first
+            pyautogui.moveTo(x, y, duration=0.1)
+            
+            # Perform the click
+            if button == 'left':
+                pyautogui.click(button='left', clicks=2 if double else 1)
+            elif button == 'right':
+                pyautogui.rightClick()
+            elif button == 'middle':
+                pyautogui.middleClick()
+            else:
+                logger.warning(f"Unsupported mouse button: {button}")
+                return False
+                
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error sending mouse click: {e}")
+            return False
     
     def send_mouse_move(self, x: int, y: int) -> bool:
         """
@@ -40,8 +64,12 @@ class LinuxInputHandler:
         Returns:
             bool: True if successful, False otherwise
         """
-        logger.warning("Linux input handling is not supported on Windows")
-        return False
+        try:
+            pyautogui.moveTo(x, y, duration=0.1)
+            return True
+        except Exception as e:
+            logger.error(f"Error moving mouse: {e}")
+            return False
     
     def send_key_press(self, key: str, modifier: str = None) -> bool:
         """
@@ -54,5 +82,13 @@ class LinuxInputHandler:
         Returns:
             bool: True if successful, False otherwise
         """
-        logger.warning("Linux input handling is not supported on Windows")
-        return False
+        try:
+            if modifier:
+                with pyautogui.hold(modifier):
+                    pyautogui.press(key)
+            else:
+                pyautogui.press(key)
+            return True
+        except Exception as e:
+            logger.error(f"Error sending key press: {e}")
+            return False
