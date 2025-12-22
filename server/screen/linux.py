@@ -1,34 +1,88 @@
 """
-Linux-specific screen capture implementation using X11.
+Linux-specific screen capture implementation using X11 with fallback for headless environments.
 """
 import os
+import sys
 import io
+import logging
 import numpy as np
 from PIL import Image
-from Xlib import display, X
-from Xlib.ext import xfixes
+
+try:
+    from Xlib import display, X
+    from Xlib.ext import xfixes
+    X11_AVAILABLE = True
+except (ImportError, OSError) as e:
+    X11_AVAILABLE = False
+    logging.warning(f"X11 not available: {e}. Running in headless mode.")
+
+class HeadlessScreenController:
+    """Fallback screen controller for headless environments."""
+    
+    def __init__(self, width=1920, height=1080):
+        self.width = width
+        self.height = height
+        self.xfix = None
+        logging.info("Initialized headless screen controller")
+    
+    def capture_screen(self, region=None):
+        """Return a blank black image for headless environments."""
+        if region:
+            width = min(region[2], self.width)
+            height = min(region[3], self.height)
+        else:
+            width, height = self.width, self.height
+            
+        # Create a black image
+        img_array = np.zeros((height, width, 3), dtype=np.uint8)
+        return Image.fromarray(img_array, 'RGB')
+    
+    def get_screen_size(self):
+        """Return the default screen size."""
+        return self.width, self.height
+
 
 class LinuxScreenController:
-    """Linux screen capture and control using X11."""
+    """Linux screen capture and control using X11 with fallback to headless mode."""
     
     def __init__(self):
-        self.display = display.Display()
-        self.screen = self.display.screen()
-        self.root = self.screen.root
+        self.xfix = None
+        self.display = None
+        self.screen = None
+        self.root = None
+        self.headless = False
         
-        # Get screen dimensions
-        self.width = self.screen.width_in_pixels
-        self.height = self.screen.height_in_pixels
-        
-        # Initialize XFixes for cursor handling
-        if self.display.has_extension('XFIXES'):
-            self.xfix = self.display.xfixes
-            self.xfix_version = self.display.xfixes_query_version()
-        else:
-            self.xfix = None
+        try:
+            if not X11_AVAILABLE:
+                raise RuntimeError("X11 libraries not available")
+                
+            self.display = display.Display()
+            self.screen = self.display.screen()
+            self.root = self.screen.root
+            
+            # Get screen dimensions
+            self.width = self.screen.width_in_pixels
+            self.height = self.screen.height_in_pixels
+            
+            # Initialize XFixes for cursor handling if available
+            if self.display.has_extension('XFIXES'):
+                self.xfix = self.display.xfixes
+                self.xfix_version = self.display.xfixes_query_version()
+                
+            logging.info("Initialized X11 screen controller")
+            
+        except Exception as e:
+            logging.warning(f"Failed to initialize X11 screen controller: {e}")
+            logging.info("Falling back to headless mode")
+            self.headless = True
+            self._headless_controller = HeadlessScreenController()
+            self.width, self.height = self._headless_controller.get_screen_size()
     
     def capture_screen(self, region=None):
         """Capture a screenshot of the screen or specified region."""
+        if self.headless:
+            return self._headless_controller.capture_screen(region)
+            
         try:
             if region:
                 x, y, width, height = region

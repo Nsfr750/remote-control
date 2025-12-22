@@ -104,6 +104,43 @@ python -m server.server [--host HOST] [--port PORT] [--password PASSWORD]
 python -m client.client [--host HOST] [--port PORT] [--username USERNAME]
 ```
 
+## 🛠️ Development
+
+### Setting Up Virtual Environment
+
+It's recommended to use a virtual environment to manage dependencies. Here's how to set it up:
+
+#### Creating a Virtual Environment
+
+```bash
+# On Windows
+python -m venv venv
+
+# On macOS/Linux
+python3 -m venv venv
+```
+
+#### Activating the Virtual Environment
+
+```bash
+# On Windows (Command Prompt)
+venv\Scripts\activate
+
+# On Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+
+# On macOS/Linux
+source venv/bin/activate
+```
+
+#### Deactivating the Virtual Environment
+
+When you're done working on the project, you can deactivate the virtual environment:
+
+```bash
+deactivate
+```
+
 ## Security
 
 - All communications are encrypted
