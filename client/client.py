@@ -363,10 +363,16 @@ class RemoteControlClient(QMainWindow):
         
         layout = QFormLayout()
         
-        self.host_input = QLineEdit("localhost")
-        self.port_input = QLineEdit("5000")
-        self.username_input = QLineEdit()
-        self.password_input = QLineEdit()
+        # Use command-line arguments if available, otherwise use defaults
+        host = getattr(self, 'host', 'localhost')
+        port = getattr(self, 'port', 5000)
+        username = getattr(self, 'username', '')
+        password = getattr(self, 'password', '')
+        
+        self.host_input = QLineEdit(host)
+        self.port_input = QLineEdit(str(port))
+        self.username_input = QLineEdit(username)
+        self.password_input = QLineEdit(password)
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.remember_check = QCheckBox("Remember credentials")
         
@@ -388,7 +394,15 @@ class RemoteControlClient(QMainWindow):
         # Load saved credentials if available
         self.load_credentials()
         
-        if dialog.exec() == QDialog.DialogCode.Accepted:
+        # Auto-connect if credentials are provided via command line
+        if username and password:
+            # Skip dialog and connect directly
+            self.host = host
+            self.port = port
+            self.username = username
+            self.password = password
+            self.connect_to_server()
+        elif dialog.exec() == QDialog.DialogCode.Accepted:
             self.host = self.host_input.text()
             self.port = int(self.port_input.text())
             self.username = self.username_input.text()
@@ -1240,9 +1254,18 @@ class RemoteControlClient(QMainWindow):
 def main():
     """Main entry point for the client application."""
     import sys
+    import argparse
     from PyQt6.QtWidgets import QApplication
     import logging
     logger = logging.getLogger(__name__)
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Remote Control Client')
+    parser.add_argument('--host', default='localhost', help='Server host to connect to')
+    parser.add_argument('--port', type=int, default=5000, help='Server port to connect to')
+    parser.add_argument('--username', default='', help='Username for authentication')
+    parser.add_argument('--password', default='', help='Password for authentication')
+    args = parser.parse_args()
     
     # Set up application
     app = QApplication(sys.argv)
@@ -1251,6 +1274,13 @@ def main():
     # Create and show main window
     logger.debug("Creating main window")
     window = RemoteControlClient()
+    
+    # Set connection parameters from command line args
+    window.host = args.host
+    window.port = args.port
+    window.username = args.username
+    window.password = args.password
+    
     window.show()
     window.raise_()  # Bring window to front
     window.activateWindow()  # Activate the window
