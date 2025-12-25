@@ -3,7 +3,8 @@ Windows-specific screen capture implementation.
 """
 import ctypes
 import numpy as np
-from PIL import ImageGrab, Image
+from wand.image import Image
+from wand.color import Color
 import win32gui
 import win32ui
 import win32con
@@ -66,24 +67,30 @@ class WindowsScreenCapture:
             win32con.SRCCOPY
         )
         
-        # Convert to PIL Image
+        # Convert to wand Image and then to PNG bytes
+        import io
+        
+        # Get bitmap info and bits
         bmpinfo = saveBitMap.GetInfo()
         bmpstr = saveBitMap.GetBitmapBits(True)
-        im = Image.frombuffer(
-            'RGB',
-            (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
-            bmpstr, 'raw', 'BGRX', 0, 1
-        )
         
-        # Convert to PNG bytes
-        import io
-        img_byte_arr = io.BytesIO()
-        im.save(img_byte_arr, format='PNG')
+        # Create a wand Image from the raw bitmap data
+        img_data = np.frombuffer(bmpstr, dtype=np.uint8).reshape((height, width, 4))
+        
+        # Convert BGRX to RGB (remove the X channel)
+        rgb_data = img_data[:, :, [2, 1, 0]]  # BGR -> RGB
+        
+        # Create wand image from numpy array
+        with Image.from_array(rgb_data) as img:
+            img_byte_arr = io.BytesIO()
+            img.format = 'png'
+            img.save(img_byte_arr)
+            result = img_byte_arr.getvalue()
         
         # Clean up
         win32gui.DeleteObject(saveBitMap.GetHandle())
         
-        return img_byte_arr.getvalue()
+        return result
     
     def __del__(self):
         """Clean up resources."""

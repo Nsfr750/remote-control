@@ -69,7 +69,7 @@ class RemoteControlServer:
     def _get_screen_controller(self):
         """Get the appropriate screen controller for the platform."""
         try:
-            from server.screen import ScreenController
+            from .screen import ScreenController
             return ScreenController()
         except ImportError as e:
             logger.error(f"Failed to load screen controller: {e}")
@@ -79,10 +79,10 @@ class RemoteControlServer:
         """Get the appropriate input controller for the platform."""
         try:
             if self.platform == 'windows':
-                from platform.windows.input import WindowsInputHandler as WindowsInputController
+                from .platform.windows.input import WindowsInputHandler as WindowsInputController
                 return WindowsInputController()
             else:
-                from server.platform.linux.input import LinuxInputHandler as LinuxInputController
+                from .platform.linux.input import LinuxInputHandler as LinuxInputController
                 return LinuxInputController()
         except ImportError as e:
             logger.error(f"Failed to load input controller: {e}")

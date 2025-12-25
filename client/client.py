@@ -800,7 +800,7 @@ class RemoteControlClient(QMainWindow):
             
             # Create QPixmap directly from image data
             pixmap = QPixmap()
-            if not pixmap.loadFromData(image_data, "JPEG"):
+            if not pixmap.loadFromData(image_data, "PNG"):
                 logger.error("Failed to load image from received data")
                 return
                 

@@ -6,7 +6,7 @@ import win32gui
 import win32ui
 import win32con
 import win32api
-from PIL import Image
+from wand.image import Image
 import io
 
 def get_screens():
@@ -22,11 +22,26 @@ def get_screens():
             'bottom': work_area[3],
             'width': work_area[2] - work_area[0],
             'height': work_area[3] - work_area[1],
-            'is_primary': win32api.GetMonitorInfo(hm).get('Flags', 0) == win32con.MONITORINFOF_PRIMARY
+            'is_primary': monitor_info.get('Flags', 0) == win32con.MONITORINFOF_PRIMARY
         })
         return True
     
-    win32gui.EnumDisplayMonitors(None, None, callback, None)
+    # Use the correct method name
+    if hasattr(win32gui, 'EnumDisplayMonitors'):
+        win32gui.EnumDisplayMonitors(None, None, callback, None)
+    else:
+        # Fallback for older pywin32 versions
+        width = win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN)
+        height = win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN)
+        monitors.append({
+            'left': 0,
+            'top': 0,
+            'right': width,
+            'bottom': height,
+            'width': width,
+            'height': height,
+            'is_primary': True
+        })
     return monitors
 
 class WindowsScreenController:
@@ -67,16 +82,18 @@ class WindowsScreenController:
             bmpinfo = bmp.GetInfo()
             bmpstr = bmp.GetBitmapBits(True)
             
-            # Convert to PIL Image
-            img = Image.frombuffer(
-                'RGB',
-                (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
-                bmpstr, 'raw', 'BGRX', 0, 1
-            )
+            # Convert to wand Image
+            img_data = np.frombuffer(bmpstr, dtype=np.uint8).reshape((height, width, 4))
             
-            # Convert to bytes
-            img_byte_arr = io.BytesIO()
-            img.save(img_byte_arr, format='JPEG', quality=70)
+            # Convert BGRX to RGB (remove the X channel)
+            rgb_data = img_data[:, :, [2, 1, 0]]  # BGR -> RGB
+            
+            # Create wand image from numpy array
+            with Image.from_array(rgb_data) as img:
+                img_byte_arr = io.BytesIO()
+                img.format = 'png'
+                img.save(img_byte_arr)
+                result = img_byte_arr.getvalue()
             
             # Clean up
             srcdc.DeleteDC()
@@ -84,7 +101,7 @@ class WindowsScreenController:
             win32gui.ReleaseDC(hwin, hwindc)
             win32gui.DeleteObject(bmp.GetHandle())
             
-            return img_byte_arr.getvalue()
+            return result
             
         except Exception as e:
             print(f"Error capturing screen: {e}")
