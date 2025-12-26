@@ -97,25 +97,32 @@ class HelpDialog(QDialog):
         
         button_box.addWidget(self.close_btn)
         main_layout.addLayout(button_box)
-           
+
     def _create_welcome_tab(self):
         """Create the welcome tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
         
-        # Welcome message
         welcome_text = """
         <h2>Welcome to Remote Control</h2>
         <p>Thank you for using Remote Control, a secure and easy-to-use application for remote desktop control, 
         screen sharing, and file transfer with advanced security features.</p>
         
-        <h3>What's New in 1.0.0</h3>
-        <h4>🚀 Initial Release</h4>
+        <h3>What's New in 1.0.1</h3>
+        <h4>🚀 Added</h4>
         <ul>
-            <li><b>Real-time Monitoring</b>: Connect to Security Information and Event Management systems</li>
-            <li><b>Centralized Logging</b>: Send security events to your SIEM for analysis</li>
-            <li><b>Secure Authentication</b>: API key and OAuth2 support for SIEM connections</li>
-            <li><b>Event Forwarding</b>: Forward security events in real-time</li>
+            <li>- Enhanced server GUI with user/password configuration fields</li>
+            <li>- Public IP detection in server configuration dialog</li>
+            <li>- Fixed platform import conflicts for better cross-platform compatibility</li>
+            <li>- Added user password update functionality</li>
+            <li>- Improved authentication error handling</li>
+        </ul>
+        <h4>🚀 Fixed</h4>
+        <ul>
+            <li>- Fixed AttributeError in server authentication (MessageType.ERROR vs AUTH_RESPONSE)</li>
+            <li>- Resolved platform module naming conflicts</li>
+            <li>- Fixed client authentication flow</li>
+            <li>- Improved error handling in screen and input controllers</li>
         </ul>        
         """
         
@@ -124,17 +131,18 @@ class HelpDialog(QDialog):
         text_browser.setHtml(welcome_text)
         
         layout.addWidget(text_browser)
-        return widget
+        return widget    
 
     def _create_server_tab(self):
         """Create the server tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        # Server message
         server_text = """
         <h2>Server Setup</h2>
-        <p>Set up the server to control remote computers.</p>
+        <p>Configure and start the remote control server.</p>
+        
+        <h3>Set up the server to control remote computers.</h3>
         """
         
         text_browser = QTextBrowser()
@@ -142,7 +150,7 @@ class HelpDialog(QDialog):
         text_browser.setHtml(server_text)
         
         layout.addWidget(text_browser)
-        return widget
+        return widget    
 
     def _create_client_tab(self):
         """Create the client tab."""
@@ -197,7 +205,7 @@ class HelpDialog(QDialog):
         
         layout.addWidget(text_browser)
         return widget           
-             
+
     def _create_about_tab(self):
         """Create the about tab."""
         widget = QWidget()
@@ -217,7 +225,7 @@ class HelpDialog(QDialog):
             <table style="margin: 0 auto; text-align: left;">
                 <tr><td><b>Operating System:</b></td><td>{system} {release}</td></tr>
                 <tr><td><b>Python Version:</b></td><td>{python_version}</td></tr>
-                <tr><td><b>Key Types:</b></td><td>RSA, ECC, Ed25519</td></tr>
+                <tr><td><b>Remote Control Features:</b></td><td>Screen sharing, File transfer, Remote control</td></tr>
             </table>
             
             <h3>License</h3>
@@ -239,7 +247,7 @@ class HelpDialog(QDialog):
         
         layout.addWidget(text_browser)
         return widget
-    
+
     def accept(self):
         """Handle dialog acceptance."""
         super().accept()
@@ -263,7 +271,4 @@ class HelpDialog(QDialog):
         try:
             QDesktopServices.openUrl(url)
         except Exception as e:
-            logger.error(self.tr(
-                "help.link_open_error",
-                "Error opening link {url}: {error}"
-            ).format(url=url.toString(), error=str(e)))
+            logger.error(f"Error opening link {url}: {str(e)}")
