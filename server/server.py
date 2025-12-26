@@ -410,21 +410,28 @@ class RemoteControlServer:
             # since the LinuxInputHandler doesn't support separate down/up events
             if pressed:  # Only send the click on press, not on release
                 try:
+                    logger.debug(f"Attempting mouse click at ({x}, {y}) with button '{button_name}'")
                     success = self.input_controller.send_mouse_click(
                         x, 
                         y, 
                         button=button_name,
                         double=False  # Single click
                     )
+                    logger.debug(f"Mouse click result: {success} (type: {type(success)})")
                     
                     if success is True or success == "SUCCESS":
+                        logger.debug("Mouse click successful")
                         return MessageType.SUCCESS, b"Mouse click handled"
                     else:
+                        logger.error(f"Mouse click failed: {success}")
                         return MessageType.ERROR, b"Failed to send mouse click"
                         
                 except Exception as click_error:
                     logger.error(f"Mouse click execution error: {click_error}")
                     return MessageType.ERROR, f"Mouse click failed: {click_error}".encode('utf-8')
+            else:
+                # Mouse release - don't send click for Linux
+                return MessageType.SUCCESS, b"Mouse release ignored"
                 
         except Exception as e:
             logger.error(f"Error handling mouse click: {e}")
@@ -452,6 +459,56 @@ class RemoteControlServer:
         except Exception as e:
             logger.error(f"Error handling key event: {e}")
             return MessageType.ERROR, f"Failed to handle key event: {e}".encode('utf-8')
+
+    def _handle_file_transfer(self, data: bytes, client_socket) -> Tuple[MessageType, bytes]:
+        """Handle file transfer requests."""
+        try:
+            if not self.file_transfer:
+                return MessageType.ERROR, b"File transfer not available"
+                
+            # Parse file transfer message
+            file_msg = FileTransferMessage.from_bytes(data)
+            
+            if file_msg.operation == 'upload':
+                # Handle file upload
+                result = self.file_transfer.handle_upload(
+                    file_msg.filename,
+                    file_msg.data,
+                    self._get_allowed_directories()
+                )
+                if result:
+                    return MessageType.SUCCESS, f"File {file_msg.filename} uploaded successfully".encode('utf-8')
+                else:
+                    return MessageType.ERROR, f"Failed to upload {file_msg.filename}".encode('utf-8')
+                    
+            elif file_msg.operation == 'download':
+                # Handle file download
+                result = self.file_transfer.handle_download(
+                    file_msg.filename,
+                    self._get_allowed_directories()
+                )
+                if result:
+                    return MessageType.FILE_TRANSFER, result
+                else:
+                    return MessageType.ERROR, f"File {file_msg.filename} not found".encode('utf-8')
+                    
+            elif file_msg.operation == 'list':
+                # Handle directory listing
+                result = self.file_transfer.handle_list(
+                    file_msg.path or '/',
+                    self._get_allowed_directories()
+                )
+                if result:
+                    return MessageType.FILE_TRANSFER, result
+                else:
+                    return MessageType.ERROR, b"Failed to list directory"
+                    
+            else:
+                return MessageType.ERROR, f"Unknown file operation: {file_msg.operation}".encode('utf-8')
+                
+        except Exception as e:
+            logger.error(f"Error handling file transfer: {e}")
+            return MessageType.ERROR, f"File transfer failed: {e}".encode('utf-8')
 
     def _handle_auth(self, data: bytes, client_id: str) -> Tuple[MessageType, bytes]:
         """Handle authentication."""

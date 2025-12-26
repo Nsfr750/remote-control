@@ -232,7 +232,7 @@ class RemoteControlClient(QMainWindow):
         self.btn_refresh.clicked.connect(self.request_screen_update)
         self.btn_refresh.setEnabled(False)
         
-        self.btn_fullscreen = QPushButton("Fullscreen")
+        self.btn_fullscreen = QPushButton("Fullscreen (ESC to exit)")
         self.btn_fullscreen.clicked.connect(self.toggle_fullscreen)
         self.btn_fullscreen.setEnabled(False)
         
@@ -582,6 +582,12 @@ class RemoteControlClient(QMainWindow):
         try:
             while self.running and self.client_socket:
                 try:
+                    # Check if socket is still valid
+                    if not self.client_socket.fileno():
+                        logger.info("Socket closed, stopping receive thread")
+                        self.running = False
+                        break
+                    
                     # Set a short timeout to allow checking self.running
                     self.client_socket.settimeout(1.0)
                 
@@ -1070,6 +1076,17 @@ class RemoteControlClient(QMainWindow):
             self.showNormal()
         else:
             self.showFullScreen()
+    
+    def keyPressEvent(self, event):
+        """Handle key press events."""
+        # Exit fullscreen with ESC key
+        if event.key() == Qt.Key.Key_Escape and self.isFullScreen():
+            self.showNormal()
+            logger.debug("Exited fullscreen mode with ESC key")
+            return
+        
+        # Call parent implementation
+        super().keyPressEvent(event)
     
     # Mouse and keyboard event handlers for remote control
     def screen_mouse_press(self, event):
