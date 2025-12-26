@@ -3,7 +3,6 @@ Cross-platform input handling implementation.
 """
 import logging
 import os
-import platform
 
 logger = logging.getLogger(__name__)
 

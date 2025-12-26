@@ -485,6 +485,8 @@ class RemoteControlClient(QMainWindow):
     def authenticate(self):
         """Authenticate with the server."""
         try:
+            logger.debug(f"Attempting authentication with username: {self.username}")
+            logger.debug(f"Password provided: {'*' * len(self.password) if self.password else 'None'}")
             auth_data = {
                 'username': self.username,
                 'password': self.password
@@ -729,6 +731,7 @@ class RemoteControlClient(QMainWindow):
                 if msg_type_enum == MessageType.ERROR:
                     error_msg = data.decode('utf-8', errors='replace')
                     logger.error(f"Server error: {error_msg}")
+                    logger.debug(f"Error message details: {data}")
                     QMessageBox.critical(self, "Server Error", error_msg)
                     self.disconnect_from_server()
                     

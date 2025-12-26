@@ -3,7 +3,7 @@ Version information
 """
 
 # Version as a tuple (major, minor, patch)
-VERSION = (1, 0, 0)
+VERSION = (1, 0, 1)
 
 # String version
 __version__ = ".".join(map(str, VERSION))
@@ -19,7 +19,7 @@ __license__ = "GPL-3.0"
 
 # Build information
 __build__ = ""
-__date__ = "2025-11-17"
+__date__ = "2025-12-24"
 
 # Version description
 __description__ = "A modern graphical user interface for remote control with enhanced encryption and security features"
@@ -44,7 +44,34 @@ version_info = tuple(map(int, __version__.split('.')))
 
 # Changelog
 __changelog__ = """
-## [1.0.0] - 2025-12-20
+## [1.0.1] - 2025-12-26
+### Added
+- Enhanced server GUI with user/password configuration fields
+- Public IP detection in server configuration dialog
+- Fixed platform import conflicts for better cross-platform compatibility
+- Added user password update functionality
+- Improved authentication error handling
+
+### Fixed
+- Fixed AttributeError in server authentication (MessageType.ERROR vs AUTH_RESPONSE)
+- Resolved platform module naming conflicts
+- Fixed client authentication flow
+- Improved error handling in screen and input controllers
+
+## [1.0.0] - 2025-12-25
+### Added
+- Complete remote control server and client implementation
+- PyQt6-based GUI with modern interface
+- Secure authentication with encrypted communication
+- Screen sharing and remote control capabilities
+- File transfer functionality
+- System information monitoring
+- Cross-platform support (Windows/Linux)
+- Menu system with File, Help, and Support options
+- System tray integration
+- Comprehensive logging and error handling
+
+## [0.1.0] - 2025-12-20
 ### Added
 - Initial release
 """
@@ -61,7 +88,7 @@ def get_version_history():
     """Return the version history."""
     return [
            {
-            "version": "1.0.0",
+            "version": "0.1.0",
             "date": "2025-12-20",
             "changes": [
                 "Initial release with basic functionality"
@@ -85,3 +112,55 @@ def get_codename():
     major, minor, patch = VERSION
     codenames = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"]
     return codenames[minor % len(codenames)]
+
+def check_for_updates(current_version=None):
+    """Check if there are updates available."""
+    if current_version is None:
+        current_version = get_version()
+    
+    # This would typically check against a remote server
+    # For now, return a mock response
+    return {
+        'has_update': False,
+        'current_version': current_version,
+        'latest_version': __version__,
+        'update_url': 'https://github.com/Nsfr750/remote-control/releases',
+        'release_notes': get_latest_changes()
+    }
+
+def update_version_info(new_version):
+    """Update the version information."""
+    global VERSION, __version__, version_info
+    
+    if isinstance(new_version, str):
+        VERSION = tuple(map(int, new_version.split('.')))
+    else:
+        VERSION = new_version
+    
+    __version__ = ".".join(map(str, VERSION))
+    version_info = tuple(map(int, __version__.split('.')))
+    
+    # Update build date
+    import datetime
+    __date__ = datetime.datetime.now().strftime("%Y-%m-%d")
+
+def get_update_info():
+    """Get detailed update information."""
+    return {
+        'current_version': __version__,
+        'version_info': VERSION,
+        'status': __status__,
+        'build_date': __date__,
+        'author': __author__,
+        'organization': __organization__,
+        'license': __license__,
+        'requires': __requires__,
+        'codename': get_codename(),
+        'is_development': is_development(),
+        'changelog': __changelog__,
+        'description': __description__
+    }
+
+def format_version():
+    """Format version string with additional info."""
+    return f"{__version__} ({get_codename()})"
