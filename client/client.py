@@ -128,6 +128,15 @@ class RemoteControlClient(QMainWindow):
         """Create the application menu bar."""
         menubar = self.menuBar()
         
+        # File menu
+        file_menu = menubar.addMenu("&File")
+        
+        # Exit action
+        exit_action = QAction("&Exit", self)
+        exit_action.setShortcut("Ctrl+Q")  # Add Ctrl+Q shortcut for exit
+        exit_action.triggered.connect(self.close_application)
+        file_menu.addAction(exit_action)
+        
         # Help menu
         help_menu = menubar.addMenu("&Help")
         
@@ -142,6 +151,7 @@ class RemoteControlClient(QMainWindow):
         
         # About action
         about_action = QAction(f"&About {self.windowTitle()}", self)
+        about_action.setShortcut("F2")  # Add F2 shortcut for Anout
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
               
@@ -150,6 +160,7 @@ class RemoteControlClient(QMainWindow):
         
         # Sponsor action
         sponsor_action = QAction("&Support this Project", self)
+        sponsor_action.setShortcut("F3")  # Add F3 shortcut for Sponsor
         sponsor_action.triggered.connect(self.show_sponsor)
         help_menu.addAction(sponsor_action)
     
@@ -172,19 +183,6 @@ class RemoteControlClient(QMainWindow):
     def show_sponsor(self):
         """Show the Sponsor dialog."""
         try:
-            show_sponsor_dialog(self)
-        except Exception as e:
-            logger.error(f"Error showing sponsor dialog: {e}")
-            QMessageBox.information(self, "Support Us", 
-                                 "Thank you for considering to support this project!\n\n"
-                                 "Error loading sponsor information.")
-            QMessageBox.about(self, "About Remote Control", 
-                            "Remote Control Client\n\n"
-                            "A secure remote control application\n"
-                            " 2024-2025 Nsfr750")
-    def show_sponsor(self):
-        """Show the Sponsor dialog."""
-        try:
             from struttura.sponsor import SponsorDialog
             sponsor_dialog = SponsorDialog(self)
             sponsor_dialog.exec()
@@ -192,6 +190,11 @@ class RemoteControlClient(QMainWindow):
             QMessageBox.information(self, "Sponsor", 
                                  "Thank you for considering to sponsor this project!\n\n"
                                  "Your support helps maintain and improve this software.")
+    
+    def close_application(self):
+        """Handle application exit from menu."""
+        logger.info("Application exit requested from menu")
+        self.close()
     
     def init_ui(self):
         """Initialize the user interface."""
