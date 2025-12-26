@@ -608,21 +608,107 @@ class RemoteControlServer:
 def main() -> None:
     """Main entry point for the server."""
     import argparse
+    import sys
+    from pathlib import Path
     
-    parser = argparse.ArgumentParser(description='Remote Control Server')
-    parser.add_argument('--host', default='0.0.0.0', help='Host to bind to')
-    parser.add_argument('--port', type=int, default=5000, help='Port to listen on')
-    args = parser.parse_args()
+    # Check if GUI should be used (no command line args)
+    if len(sys.argv) == 1:
+        # Use GUI mode
+        try:
+            from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QDialogButtonBox
+            from PyQt6.QtCore import Qt
+            from PyQt6.QtGui import QFont
+            
+            class ServerConfigDialog(QDialog):
+                def __init__(self, parent=None):
+                    super().__init__(parent)
+                    self.setWindowTitle("Remote Control Server - Configuration")
+                    self.setFixedSize(400, 200)
+                    
+                    layout = QVBoxLayout()
+                    
+                    # Host input
+                    host_label = QLabel("Host:")
+                    self.host_input = QLineEdit("0.0.0.0")
+                    self.host_input.setFont(QFont("Consolas", 10))
+                    
+                    # Port input
+                    port_label = QLabel("Port:")
+                    self.port_input = QLineEdit("5000")
+                    self.port_input.setFont(QFont("Consolas", 10))
+                    
+                    # Start button
+                    self.start_button = QPushButton("Start Server")
+                    self.start_button.clicked.connect(self.accept)
+                    self.start_button.setDefault(True)
+                    
+                    # Add to layout
+                    layout.addWidget(host_label)
+                    layout.addWidget(self.host_input)
+                    layout.addWidget(port_label)
+                    layout.addWidget(self.port_input)
+                    layout.addWidget(self.start_button)
+                    
+                    self.setLayout(layout)
+                    
+                def get_host(self):
+                    return self.host_input.text().strip()
+                    
+                def get_port(self):
+                    try:
+                        return int(self.port_input.text().strip())
+                    except ValueError:
+                        return 5000
+            
+            app = QApplication(sys.argv)
+            dialog = ServerConfigDialog()
+            
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                host = dialog.get_host()
+                port = dialog.get_port()
+                print(f"Starting server on {host}:{port}")
+            else:
+                print("Server configuration cancelled")
+                sys.exit(0)
+                
+        except ImportError:
+            print("PyQt6 not available, falling back to command line mode")
+            # Fall back to command line mode
+            use_gui = False
+        else:
+            use_gui = False
     
-    server = RemoteControlServer(host=args.host, port=args.port)
+    if not use_gui:
+        # Command line mode
+        parser = argparse.ArgumentParser(description='Remote Control Server')
+        parser.add_argument('--host', default='0.0.0.0', help='Host to bind to')
+        parser.add_argument('--port', type=int, default=5000, help='Port to listen on')
+        args = parser.parse_args()
+        host = args.host
+        port = args.port
+    else:
+        # GUI mode - get values from dialog
+        host = dialog.get_host()
+        port = dialog.get_port()
+    
+    server = RemoteControlServer(host=host, port=port)
     
     try:
         server.start()
+        if use_gui:
+            print(f"Server started successfully on {host}:{port}")
+            print("Press Ctrl+C to stop the server")
     except KeyboardInterrupt:
-        print("\nShutting down server...")
+        if use_gui:
+            print("\nShutting down server...")
+        else:
+            print("\nShutting down server...")
         server.stop()
     except Exception as e:
-        print(f"Error: {e}")
+        if use_gui:
+            print(f"Error: {e}")
+        else:
+            print(f"Error: {e}")
         server.stop()
         sys.exit(1)
 
