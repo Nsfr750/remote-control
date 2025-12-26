@@ -18,10 +18,10 @@ import logging
 
 # Get version information
 try:
-    from version import get_version
+    from versione import get_version
     VERSION = get_version()
 except ImportError:
-    VERSION = "1.0.0"
+    VERSION = "1.0.1"
 
 def show_help_dialog(parent=None):
     """Show the help dialog."""
@@ -36,7 +36,7 @@ class HelpDialog(QDialog):
     def __init__(self, parent=None):
         """Initialize the help dialog."""
         super().__init__(parent)
-        self.setWindowTitle("OpenPGP Help")
+        self.setWindowTitle("Remote Control Help")
         self.resize(800, 600)
         self.setMinimumSize(600, 400)
         
@@ -63,10 +63,10 @@ class HelpDialog(QDialog):
         
         # Add tabs
         self.tabs.addTab(self._create_welcome_tab(), "Welcome")
-        self.tabs.addTab(self._create_encryption_tab(), "Encryption")
-        self.tabs.addTab(self._create_decryption_tab(), "Decryption")
-        self.tabs.addTab(self._create_keys_tab(), "Key Management")
-        self.tabs.addTab(self._create_security_tab(), "Security")
+        self.tabs.addTab(self._create_server_tab(), "Server Setup")
+        self.tabs.addTab(self._create_client_tab(), "Client Usage")
+        self.tabs.addTab(self._create_features_tab(), "Features")
+        self.tabs.addTab(self._create_troubleshooting_tab(), "Troubleshooting")
         self.tabs.addTab(self._create_about_tab(), "About")
         
         main_layout.addWidget(self.tabs)
@@ -82,7 +82,7 @@ class HelpDialog(QDialog):
         # Style the close button
         self.close_btn.setStyleSheet("""
             QPushButton {
-                background-color: #0078d7;
+                background-color: #dc3545;
                 color: white;
                 border: none;
                 padding: 8px 16px;
@@ -91,86 +91,13 @@ class HelpDialog(QDialog):
                 min-width: 80px;
             }
             QPushButton:hover {
-                background-color: #106ebe;
+                background-color: #c82333;
             }
         """)
         
         button_box.addWidget(self.close_btn)
         main_layout.addLayout(button_box)
-    
-    def _create_encryption_tab(self):
-        """Create the encryption tab."""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        
-        text = """
-        <h2>Remote Control Features</h2>
-        
-        <h3>🔒 Secure Remote Access</h3>
-        <p>Securely connect to and control remote computers with end-to-end encryption.</p>
-        
-        <h3>🖱️ Remote Control</h3>
-        <ul>
-            <li>Mouse and keyboard control of remote systems</li>
-            <li>Multi-monitor support</li>
-            <li>Clipboard sharing</li>
-            <li>File transfer between systems</li>
-        </ul>
-        
-        <h3>🔐 Security Features</h3>
-        <ul>
-            <li>End-to-end encryption for all communications</li>
-            <li>Authentication using username/password</li>
-            <li>Secure file transfer with integrity checking</li>
-            <li>Session logging and auditing</li>
-        </ul>
-        
-        <h3>Getting Started</h3>
-        <ol>
-            <li>Start the server on the remote computer</li>
-            <li>Connect using the client with the correct credentials</li>
-            <li>Begin your remote session</li>
-        </ol>
-        """
-        
-        text_browser = QTextBrowser()
-        text_browser.setOpenExternalLinks(True)
-        text_browser.setHtml(text)
-        
-        layout.addWidget(text_browser)
-        return widget
-        
-    def _create_decryption_tab(self):
-        """Create the decryption tab (duplicate of encryption tab for now)."""
-        return self._create_encryption_tab()
-        
-    def _create_keys_tab(self):
-        """Create the keys tab."""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        
-        text = """
-        <h2>Key Management</h2>
-        
-        <h3>Authentication Keys</h3>
-        <p>Manage your authentication keys for secure connections.</p>
-        
-        <h3>Key Features</h3>
-        <ul>
-            <li>Generate new key pairs</li>
-            <li>Import/export public keys</li>
-            <li>Key revocation and rotation</li>
-            <li>Key usage statistics</li>
-        </ul>
-        """
-        
-        text_browser = QTextBrowser()
-        text_browser.setOpenExternalLinks(True)
-        text_browser.setHtml(text)
-        
-        layout.addWidget(text_browser)
-        return widget
-        
+           
     def _create_welcome_tab(self):
         """Create the welcome tab."""
         widget = QWidget()
@@ -189,38 +116,7 @@ class HelpDialog(QDialog):
             <li><b>Centralized Logging</b>: Send security events to your SIEM for analysis</li>
             <li><b>Secure Authentication</b>: API key and OAuth2 support for SIEM connections</li>
             <li><b>Event Forwarding</b>: Forward security events in real-time</li>
-        </ul>
-        
-        <h4>🔄 SCIM 2.0 Server</h4>
-        <ul>
-            <li><b>User Provisioning</b>: Automate user and group management</li>
-            <li><b>Standard Compliance</b>: Full SCIM 2.0 protocol implementation</li>
-            <li><b>Secure Authentication</b>: OAuth2 and API key support</li>
-            <li><b>Audit Logging</b>: Track all provisioning events</li>
-        </ul>
-        
-        <h4>🔒 Enhanced Security</h4>
-        <ul>
-            <li><b>Improved TPM 2.0 Support</b>: Better hardware security module integration</li>
-            <li><b>Key Management</b>: Enhanced key rotation and lifecycle management</li>
-            <li><b>Audit Logging</b>: Comprehensive security event tracking</li>
-        </ul>
-        
-        <h3>Getting Started</h3>
-        <ol>
-            <li>Generate a new key pair (RSA, ECC, or Ed25519) or import existing keys</li>
-            <li>Encrypt files or messages with public keys</li>
-            <li>Decrypt received files with your private key or hardware token</li>
-            <li>Manage your keys, contacts, and security settings</li>
-        </ol>
-        
-        <h3>Quick Tips</h3>
-        <ul>
-            <li>Always keep your private key and hardware tokens secure</li>
-            <li>Regularly back up your keys using the built-in backup feature</li>
-            <li>Verify the fingerprint of public keys before using them</li>
-            <li>Use hardware tokens for enhanced security of your private keys</li>
-        </ul>
+        </ul>        
         """
         
         text_browser = QTextBrowser()
@@ -229,98 +125,79 @@ class HelpDialog(QDialog):
         
         layout.addWidget(text_browser)
         return widget
-      
-    def _create_security_tab(self):
-        """Create the security features tab."""
+
+    def _create_server_tab(self):
+        """Create the server tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        
-        text = """
-        <h2>Security Features in OpenPGP</h2>
-        
-        <h3>🔌 SIEM Integration</h3>
-        <p>Monitor and analyze security events in real-time with Security Information and Event Management integration.</p>
-        <ul>
-            <li><b>Real-time Monitoring</b>: Connect to SIEM solutions like Splunk, ELK, or Graylog</li>
-            <li><b>Security Event Logging</b>: Track all security-relevant operations</li>
-            <li><b>API Integration</b>: Secure API key and OAuth2 authentication</li>
-            <li><b>Custom Alerts</b>: Configure alerts for suspicious activities</li>
-        </ul>
-        
-        <h3>🔄 SCIM 2.0 Server</h3>
-        <p>Automated user and group management with System for Cross-domain Identity Management.</p>
-        <ul>
-            <li><b>User Provisioning</b>: Automate user lifecycle management</li>
-            <li><b>Group Management</b>: Synchronize group memberships</li>
-            <li><b>Standard Protocol</b>: Full SCIM 2.0 compliance</li>
-            <li><b>Secure Authentication</b>: OAuth2 and API key support</li>
-        </ul>
-        
-        <h3>🔒 Hardware Security Module (HSM) Support</h3>
-        <p>Enterprise-grade key protection with hardware security modules.</p>
-        <ul>
-            <li>Support for YubiKey and other PKCS#11 compatible devices</li>
-            <li>Secure key generation directly on the hardware token</li>
-            <li>PIN and touch protection for private key operations</li>
-            <li>Hardware-backed encryption and signing operations</li>
-        </ul>
-        
-        <h3>Secure File Operations</h3>
-        <p>Enhanced file encryption with advanced security options:</p>
-        <ul>
-            <li>Multiple encryption algorithms (AES-256, ChaCha20, Twofish)</li>
-            <li>File integrity verification with HMAC</li>
-            <li>Automatic compression before encryption</li>
-            <li>Secure file wiping after operations</li>
-        </ul>
-        
-        <h3>Secure Messaging</h3>
-        <p>End-to-end encrypted messaging with the following features:</p>
-        <ul>
-            <li>Asymmetric encryption using recipient's public key</li>
-            <li>Digital signatures for message authentication</li>
-            <li>Support for both text and file attachments</li>
-            <li>Perfect Forward Secrecy (PFS) for enhanced security</li>
-        </ul>
-        
-        <h3>Secure File Sharing</h3>
-        <p>Securely share files with fine-grained access control:</p>
-        <ul>
-            <li>Password protection for shared files</li>
-            <li>Expiration dates for shared links</li>
-            <li>Recipient-based access control</li>
-            <li>Download limits for shared files</li>
-        </ul>
-        
-        <h3>Trust Model</h3>
-        <p>Advanced trust management for PGP keys:</p>
-        <ul>
-            <li>Visual representation of trust relationships</li>
-            <li>Web of Trust (WOT) visualization</li>
-            <li>Trust level assignment for keys</li>
-            <li>Automatic trust path validation</li>
-        </ul>
-        
-        <h3>Best Practices</h3>
-        <ul>
-            <li>Always use hardware tokens for storing private keys when possible</li>
-            <li>Regularly update your software to get the latest security patches</li>
-            <li>Verify the identity of the people you communicate with</li>
-            <li>Use strong, unique passphrases for your keys</li>
-            <li>Regularly back up your keys and important data</li>
-            <li>Enable SIEM integration for centralized security monitoring</li>
-            <li>Use SCIM for automated user and group management</li>
-            <li>Review audit logs regularly for suspicious activities</li>
-        </ul>
+
+        # Server message
+        server_text = """
+        <h2>Server Setup</h2>
+        <p>Set up the server to control remote computers.</p>
         """
         
         text_browser = QTextBrowser()
         text_browser.setOpenExternalLinks(True)
-        text_browser.setHtml(text)
+        text_browser.setHtml(server_text)
         
         layout.addWidget(text_browser)
         return widget
+
+    def _create_client_tab(self):
+        """Create the client tab."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # Client message
+        client_text = """
+        <h2>Client Usage</h2>
+        <p>Set up the client to control remote computers.</p>
+        """
         
+        text_browser = QTextBrowser()
+        text_browser.setOpenExternalLinks(True)
+        text_browser.setHtml(client_text)
+        
+        layout.addWidget(text_browser)
+        return widget
+
+    def _create_features_tab(self):
+        """Create the features tab."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)  
+
+        # Features message
+        features_text = """
+        <h2>Features</h2>
+        
+        """
+        
+        text_browser = QTextBrowser()
+        text_browser.setOpenExternalLinks(True)
+        text_browser.setHtml(features_text)
+        
+        layout.addWidget(text_browser)
+        return widget          
+
+    def _create_troubleshooting_tab(self):
+        """Create the troubleshooting tab."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)   
+
+        # troubleshooting message
+        troubleshooting_text = """
+        <h2>Troubleshooting</h2>
+        
+        """
+        
+        text_browser = QTextBrowser()
+        text_browser.setOpenExternalLinks(True)
+        text_browser.setHtml(troubleshooting_text)
+        
+        layout.addWidget(text_browser)
+        return widget           
+             
     def _create_about_tab(self):
         """Create the about tab."""
         widget = QWidget()
@@ -341,18 +218,7 @@ class HelpDialog(QDialog):
                 <tr><td><b>Operating System:</b></td><td>{system} {release}</td></tr>
                 <tr><td><b>Python Version:</b></td><td>{python_version}</td></tr>
                 <tr><td><b>Key Types:</b></td><td>RSA, ECC, Ed25519</td></tr>
-                <tr><td><b>Hardware Tokens:</b></td><td>YubiKey and compatible</td></tr>
             </table>
-            
-            <h3>Features</h3>
-            <ul style="text-align: left; display: inline-block;">
-                <li>Secure key generation and management</li>
-                <li>File and message encryption/decryption</li>
-                <li>Digital signatures and verification</li>
-                <li>Hardware token support</li>
-                <li>Drag and drop interface</li>
-                <li>Key backup and recovery</li>
-            </ul>
             
             <h3>License</h3>
             <p>© Copyright 2024-2025 Nsfr750. All Rights Reserved</p>

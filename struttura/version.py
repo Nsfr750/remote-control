@@ -87,7 +87,38 @@ def get_version_info():
 def get_version_history():
     """Return the version history."""
     return [
-           {
+        {
+            "version": "1.0.1",
+            "date": "2025-12-26",
+            "changes": [
+                "Enhanced server GUI with user/password configuration fields",
+                "Public IP detection in server configuration dialog",
+                "Fixed platform import conflicts for better cross-platform compatibility",
+                "Added user password update functionality",
+                "Improved authentication error handling",
+                "Fixed AttributeError in server authentication (MessageType.ERROR vs AUTH_RESPONSE)",
+                "Resolved platform module naming conflicts",
+                "Fixed client authentication flow",
+                "Improved error handling in screen and input controllers"
+            ]
+        },
+        {
+            "version": "1.0.0",
+            "date": "2025-12-25",
+            "changes": [
+                "Complete remote control server and client implementation",
+                "PyQt6-based GUI with modern interface",
+                "Secure authentication with encrypted communication",
+                "Screen sharing and remote control capabilities",
+                "File transfer functionality",
+                "System information monitoring",
+                "Cross-platform support (Windows/Linux)",
+                "Menu system with File, Help, and Support options",
+                "System tray integration",
+                "Comprehensive logging and error handling"
+            ]
+        },
+        {
             "version": "0.1.0",
             "date": "2025-12-20",
             "changes": [
