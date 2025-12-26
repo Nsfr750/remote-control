@@ -611,9 +611,13 @@ def main() -> None:
     import sys
     from pathlib import Path
     
+    # Initialize GUI mode flag
+    use_gui = False
+    
     # Check if GUI should be used (no command line args)
     if len(sys.argv) == 1:
         # Use GUI mode
+        use_gui = True
         try:
             from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QDialogButtonBox
             from PyQt6.QtCore import Qt
