@@ -20,6 +20,7 @@
 - ⌨️ Keyboard input handling
 - 🖼️ Real-time screen sharing
 - 🏗️ Platform-specific implementations for Windows and Linux
+- ⌨️ **Fullscreen Exit**: Press ESC to exit fullscreen mode
 
 ### 🔒 Secure Authentication
 - 🔑 Password protection with strong encryption
@@ -27,7 +28,7 @@
 - 🔐 Secure credential storage
 - 👤 Multi-user support with role-based access
 
-### 🖥️ Remote Control
+### 🖥️ Remote Desktop
 - 🖱️ Full mouse and keyboard control
 - 🖥️ Multi-monitor support
 - 🎥 Real-time screen sharing with adjustable quality
@@ -38,6 +39,13 @@
 - 📂 Intuitive directory navigation
 - ✂️ File operations (copy, move, delete, rename)
 - 📁 Batch operations support
+- 🐛 **Linux Support**: Full file transfer functionality on Linux servers
+
+### 🏗️ Build System
+- 🔧 **Separate Build Scripts**: Individual client/server compilation
+- 📦 **Nuitka Integration**: Standalone executable generation
+- 🔐 **Code Signing**: Digital certificate integration
+- 🚀 **Cross-Platform**: Windows and Linux support
 
 ### 📊 System Monitoring
 - ℹ️ Real-time system information
@@ -48,6 +56,8 @@
 ### 🛠️ Additional Features
 - 💬 Built-in secure chat
 - 📱 Mobile-friendly interface
+- 🎨 Customizable themes
+- ⚡ Performance optimized
 - 🎨 Customizable themes
 - ⚡ Performance optimized
 
@@ -79,6 +89,35 @@
    ```bash
    python -m client
    ```
+
+### 🏗️ Building from Source
+
+For users who want to compile standalone executables:
+
+#### Prerequisites
+- Python 3.8+ with virtual environment
+- Nuitka 2.8.9+ for compilation
+- Windows SDK for code signing (optional)
+
+#### Build Scripts
+
+```bash
+# Build Client Application
+& x:/GitHub/remote-control/venv312/Scripts/python.exe setup/build_client.py
+
+# Build Server Application  
+& x:/GitHub/remote-control/venv312/Scripts/python.exe setup/build_server.py
+```
+
+#### Generated Executables
+- `dist/RemoteControlClient.exe` - Standalone client application
+- `dist/RemoteControlServer.exe` - Standalone server application
+
+#### Code Signing
+```bash
+# Sign executables (requires certificate setup)
+setup/firma.bat
+```
 
 ## 📦 Requirements
 

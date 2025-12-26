@@ -180,6 +180,8 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 /.windsurf
-/setup
-test.py
 users.json
+setup/clean_pycache.py
+setup/installer.nsi
+setup/release-text
+setup/TXT

@@ -1,20 +1,21 @@
-# Remote-Control - User Guide
+# Remote Control - User Guide
 
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [System Requirements](#system-requirements)
 3. [Installation](#installation)
-4. [Getting Started](#getting-started)
-5. [User Interface](#user-interface)
-6. [Features](#features)
-7. [Configuration](#configuration)
-8. [Troubleshooting](#troubleshooting)
-9. [Frequently Asked Questions](#frequently-asked-questions)
-10. [Support](#support)
+4. [Building from Source](#building-from-source)
+5. [Getting Started](#getting-started)
+6. [User Interface](#user-interface)
+7. [Features](#features)
+8. [Configuration](#configuration)
+9. [Troubleshooting](#troubleshooting)
+10. [Frequently Asked Questions](#frequently-asked-questions)
+11. [Support](#support)
 
 ## Introduction
 
-Welcome to the Windsurf project! This guide will help you get started with the application and make the most of its features.
+Welcome to the Remote Control application! This comprehensive guide will help you get started with the application and make the most of its features for remote desktop management and file transfer.
 
 ## System Requirements
 
@@ -28,6 +29,50 @@ Welcome to the Windsurf project! This guide will help you get started with the a
 - Ubuntu 20.04 LTS or later / Debian 10 or later
 - Python 3.8 or higher
 - 4GB RAM minimum (8GB recommended)
+- 200MB free disk space
+- `import` or `scrot` for screen capture
+- `xrandr` for display detection
+
+## Installation
+
+### Option 1: Using Pre-built Executables
+1. Download the latest release from the repository
+2. Extract the ZIP file
+3. Run `RemoteControlClient.exe` (client) or `RemoteControlServer.exe` (server)
+
+### Option 2: From Source
+1. Clone the repository
+2. Create virtual environment: `python -m venv venv312`
+3. Activate environment: `venv312\Scripts\activate`
+4. Install dependencies: `pip install -r requirements.txt`
+5. Run application: `python -m client.client` or `python -m server.server`
+
+## Building from Source
+
+### Prerequisites
+- Python 3.8+ with virtual environment
+- Nuitka 2.8.9+ for compilation
+- Windows SDK for code signing (optional)
+
+### Build Scripts
+
+```bash
+# Build Client Application
+& x:/GitHub/remote-control/venv312/Scripts/python.exe setup/build_client.py
+
+# Build Server Application  
+& x:/GitHub/remote-control/venv312/Scripts/python.exe setup/build_server.py
+```
+
+### Generated Executables
+- `dist/RemoteControlClient.exe` - Standalone client application
+- `dist/RemoteControlServer.exe` - Standalone server application
+
+### Code Signing
+```bash
+# Sign executables (requires certificate setup)
+setup/firma.bat
+```
 - 200MB free disk space
 
 ## Installation
@@ -56,6 +101,65 @@ python main.py
 ```
 
 ## Getting Started
+
+### Starting the Server
+
+```bash
+# Basic server startup
+python -m server.server --host 0.0.0.0 --port 5000
+
+# With password protection
+python -m server.server --host 0.0.0.0 --port 5000 --password your_password
+```
+
+### Connecting with Client
+
+```bash
+# Connect to local server
+python -m client.client --host localhost --port 5000
+
+# Connect to remote server
+python -m client.client --host 192.168.1.4 --port 5000 --username admin
+```
+
+### Authentication
+1. Enter your username and password when prompted
+2. Wait for authentication confirmation
+3. The remote desktop will appear in the main window
+
+## User Interface
+
+### Main Window
+- **Remote Desktop View**: Displays the remote computer's screen
+- **Connection Status**: Shows current connection state
+- **Control Panel**: Access to settings and file transfer
+- **Fullscreen Button**: Toggle fullscreen mode
+
+### Controls
+- **Mouse**: Click and drag to control remote mouse
+- **Keyboard**: Type to send keystrokes to remote computer
+- **ESC Key**: Exit fullscreen mode
+- **File Transfer**: Upload/download files via the file browser
+
+## Features
+
+### Remote Desktop Control
+- **Real-time Screen Sharing**: See the remote desktop live
+- **Mouse Control**: Full mouse movement and click support
+- **Keyboard Input**: Complete keyboard functionality
+- **Multi-monitor Support**: Works with multiple displays
+- **Fullscreen Mode**: Immersive remote control experience
+
+### File Management
+- **Secure Upload**: Transfer files from local to remote machine
+- **Download Files**: Retrieve files from remote computer
+- **Directory Navigation**: Browse remote file system
+- **Batch Operations**: Handle multiple files simultaneously
+
+### Platform Support
+- **Windows**: Full feature support with native screen capture
+- **Linux**: Screen capture via import/scrot, full input support
+- **Cross-platform**: Consistent experience across operating systems
 
 ### Prerequisites
 - Python 3.8 or higher

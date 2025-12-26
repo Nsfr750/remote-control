@@ -2,20 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
-## 🚀 [Unreleased]
+## 🚀 [1.0.0] - 2025-12-26
 
 ### ✨ Added
+- 🔧 **Nuitka Compilation**: Added separate build scripts for client and server
+- 📦 **Standalone Executables**: Successfully compiled RemoteControlClient.exe and RemoteControlServer.exe
+- 🔐 **Code Signing**: Integrated digital certificate signing for executables
+- 🖥️ **Linux Screen Capture**: Implemented proper Linux screen capture using import/scrot
+- 📁 **File Transfer System**: Added complete file upload/download functionality
+- 🖱️ **Mouse Control**: Fixed Linux mouse click handling with proper success detection
+- ⌨️ **Fullscreen Exit**: Added ESC key to exit fullscreen mode
+- 🛡️ **Socket Error Handling**: Improved disconnect handling to prevent socket errors
+- 🎨 **Image Loading**: Enhanced client to support multiple image formats (PNG/JPEG)
+- 🐛 **Debug Logging**: Added comprehensive debugging for mouse and screen operations
 
-- 🖱️ Added Windows-specific input controller with mouse and keyboard event handling
-- 🖥️ Implemented platform-specific screen capture for Windows
-- 🏗️ Added modular input handling architecture
-- 🛠️ Added proper error handling for input operations
-- 📊 Enhanced system information reporting
-- 🔄 Improved client-server message handling
-- 🔐 Enhanced authentication flow with better security
-- 📝 Better logging throughout the application
-- ✅ Comprehensive test coverage
-- 🌐 Multi-language support infrastructure
+### 🔄 Changed
+- 🏗️ **Build System**: Switched from single comp.py to separate build_client.py/build_server.py
+- 🔧 **Nuitka Options**: Optimized compilation flags for PyQt6 compatibility
+- 📊 **Error Handling**: Improved exception handling throughout client-server communication
+- 🖼️ **Image Format**: Server now sends JPEG format for better compatibility
+
+### 🐛 Fixed
+- 💥 **Cryptography Issues**: Resolved _cffi_backend import errors
+- 🔢 **NumPy Compatibility**: Fixed C extension compatibility issues
+- 🖱️ **Mouse Click Errors**: Fixed "SUCCESS" being treated as error
+- 📱 **Fullscreen Mode**: Added proper exit mechanism with ESC key
+- 🔌 **Socket Errors**: Resolved WinError 10038 during disconnect
+- 🖼️ **Static Screen Issue**: Fixed Linux server sending same screenshot repeatedly
+- 📁 **File Transfer**: Implemented missing file transfer handler
+- 🎨 **Image Loading**: Fixed client unable to display server screenshots
+
+### ⚡ Performance
+- 🚀 **Faster Compilation**: Separate build scripts reduce compilation time
+- 📊 **Better Logging**: Reduced debug overhead while maintaining detail
+- 🔄 **Real-time Updates**: Improved screen capture frequency and quality
 
 ### 🔄 Changed
 

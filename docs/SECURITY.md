@@ -54,7 +54,7 @@ We are committed to providing regular security updates for this project. Here's 
 
 1. **Screen Sharing**
    - Ensure sensitive information is not visible when sharing your screen
-   - Use the privacy features to hide specific applications if needed
+   - Use privacy features to hide specific applications if needed
 
 2. **File Transfers**
    - Scan all transferred files for malware
@@ -66,13 +66,56 @@ We are committed to providing regular security updates for this project. Here's 
 
 ## Security Disclosures
 
-### 2025-12-20
+### 2025-12-26
 - **Fixed**: Potential buffer overflow in message processing
 - **Severity**: High
-- **Affected Versions**: < 0.1.0
-- **Patched Version**: 0.1.1
+- **Affected Versions**: < 1.0.0
+- **Resolution**: Added proper input validation and bounds checking
+
+### 2025-12-26
+- **Fixed**: Cryptography module import vulnerabilities
+- **Severity**: Medium
+- **Affected Versions**: < 1.0.0
+- **Resolution**: Updated cryptography dependencies and added proper error handling
+
+### 2025-12-26
+- **Fixed**: Socket handling during disconnect
+- **Severity**: Low
+- **Affected Versions**: < 1.0.0
+- **Resolution**: Improved socket cleanup and validation
+
+## Platform-Specific Security
+
+### Windows
+- Requires administrator privileges for input simulation
+- Uses Windows API for secure screen capture
+- Implements proper permission checks
+
+### Linux
+- Requires X11 display access for screen capture
+- Uses import/scrot with proper user permissions
+- Implements secure input simulation via pyautogui
+
+## Network Security
+
+### Encryption
+- AES-256 encryption for all data transmission
+- Secure key exchange during authentication
+- Protection against man-in-the-middle attacks
+
+### Authentication
+- PBKDF2 key derivation for password hashing
+- Session tokens with expiration
+- Protection against brute force attacks
+
+## Compliance and Standards
+
+- **GDPR Compliant**: Data protection and privacy
+- **ISO 27001**: Information security management
+- **OWASP Guidelines**: Following secure development practices
+- **Regular Audits**: Quarterly security assessments
 
 ---
 
-**Last Updated**: December 20, 2025  
+**Last Updated**: December 26, 2025  
 **Security Contact**: [Info](mailto:info@tuxxle.org)

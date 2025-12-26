@@ -1,19 +1,20 @@
 # API Documentation
 
+## Overview
+
+The Remote Control application provides a comprehensive API for client-server communication, file operations, and platform-specific functionality.
+
 ## Table of Contents
-- [Introduction](#introduction)
-- [Protocol Overview](#protocol-overview)
-- [Message Types](#message-types)
-- [Authentication](#authentication)
-- [Message Format](#message-format)
-- [Client-Server API](#client-server-api)
-- [Error Handling](#error-handling)
-- [File Transfer](#file-transfer)
-- [System Information](#system-information)
-- [Keepalive](#keepalive)
+1. [Message Protocol](#message-protocol)
+2. [Client API](#client-api)
+3. [Server API](#server-api)
+4. [File Transfer API](#file-transfer-api)
+5. [Platform APIs](#platform-apis)
+6. [Examples](#examples)
 
-## Introduction
+## Message Protocol
 
+### Message Types
 This document describes the binary protocol and message formats used by the Remote Control application for communication between clients and servers.
 
 ## Protocol Overview
@@ -107,6 +108,7 @@ All messages follow the same binary format:
 ### Keyboard Event
 - **Type**: `KEY_EVENT` (4)
 - **Data Format**: JSON
+
   ```json
   {
     "key": "a",
@@ -121,6 +123,7 @@ All messages follow the same binary format:
 ### System Information
 - **Type**: `INFO` (10)
 - **Response**: JSON with system information
+
   ```json
   {
     "platform": "Windows-10-10.0.19041-SP0",
@@ -145,6 +148,7 @@ All messages follow the same binary format:
 ### File Transfer Message
 - **Type**: `FILE_TRANSFER` (6)
 - **Data Format**: JSON
+
   ```json
   {
     "operation": "upload|download|delete|list",
