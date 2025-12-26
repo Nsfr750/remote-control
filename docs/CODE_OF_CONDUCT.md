@@ -283,7 +283,7 @@ This code of conduct is a living document:
 
 ---
 
-**Last Updated**: December 26, 2025  
+**Last Updated**: December 27, 2025  
 **Version**: 1.0  
-**Effective Date**: December 26, 2025  
+**Effective Date**: December 27, 2025  
 **Contact**: [info@tuxxle.org](mailto:info@tuxxle.org)

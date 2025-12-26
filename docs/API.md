@@ -54,6 +54,8 @@ The following message types are defined in the protocol:
 3. Server validates credentials and responds with `AUTH_RESPONSE`
 4. If successful, client can send other message types
 
+Note: starting from version 1.0.1, authentication failures are returned as `AUTH_RESPONSE` with `success: false` (not as `ERROR`).
+
 ### Authentication Request
 ```json
 {
@@ -142,6 +144,12 @@ All messages follow the same binary format:
 ### Error Response
 - **Type**: `ERROR` (9)
 - **Data Format**: UTF-8 encoded error message string
+
+## Debugging
+
+Log files are saved under the project `logs/` folder:
+- `logs/server.log`
+- `logs/client_debug.log`
 
 ## File Transfer
 

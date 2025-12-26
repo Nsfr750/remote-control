@@ -8,6 +8,8 @@ graph TD
     B --> C[client/]
     B --> D[server/]
     B --> E[common/]
+    B --> E2[assets/]
+    B --> E3[logs/]
     B --> F[requirements.txt]
     B --> G[README.md]
     C --> H[__init__.py]
@@ -20,6 +22,9 @@ graph TD
     E --> O[protocol.py]
     E --> P[security.py]
     E --> Q[file_transfer.py]
+    E2 --> E2A[icon.png]
+    E3 --> E3A[server.log]
+    E3 --> E3B[client_debug.log]
 ```
 
 ## Architecture Flow
@@ -45,9 +50,9 @@ sequenceDiagram
     participant P as Platform
     
     C->>S: Connect Request
-    S->>C: Authentication Challenge
-    C->>S: Credentials
-    S->>C: Session Token
+    C->>S: AUTH {username, password}
+    S->>C: AUTH_RESPONSE {success, message}
+    Note over C,S: On success, session continues; on failure client disconnects
     
     loop Remote Control Session
         C->>S: Input Events
@@ -73,6 +78,7 @@ graph LR
         A1[GUI Layer] --> A2[Network Layer]
         A2 --> A3[Protocol Layer]
         A3 --> A4[Security Layer]
+        A1 --> A5[Log Viewer (Tools -> View Logs)]
     end
     
     subgraph "Server Components"
@@ -248,6 +254,6 @@ graph TD
 
 ---
 
-**Last Updated**: December 26, 2025  
-**Version**: 1.0.0  
+**Last Updated**: December 27, 2025  
+**Version**: 1.0.1  
 **License**: GPLv3

@@ -153,6 +153,17 @@ import -window root -screen png test.png
 - **JPEG**: Fallback format (Linux servers)
 - **Auto-detection**: Client tries PNG first, then JPEG
 
+### Q: Where are the logs stored?
+**A:** Logs are stored in the project folder under:
+
+- `logs/server.log`
+- `logs/client_debug.log`
+
+### Q: How do I view logs inside the client?
+**A:** Use the menu entry:
+
+- `Tools -> View Logs`
+
 ## Security and Privacy
 
 ### Q: Is my connection secure?
@@ -405,6 +416,6 @@ python -m server.server --host 0.0.0.0 --port 5000 --debug
 
 ---
 
-**Last Updated**: December 26, 2025  
-**Version**: 1.0.0  
+**Last Updated**: December 27, 2025  
+**Version**: 1.0.1  
 **For more help**: See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) or [CONTRIBUTING.md](CONTRIBUTING.md)

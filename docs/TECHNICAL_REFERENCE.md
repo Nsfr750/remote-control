@@ -660,9 +660,18 @@ class ScreenCaptureError(RemoteControlError):
     pass
 ```
 
+## Logging
+
+Runtime logs are stored in the project folder under `logs/`:
+- `logs/server.log`
+- `logs/client_debug.log`
+
+The client provides a built-in log viewer:
+- `Tools -> View Logs`
+
 ---
 
-**Last Updated**: December 26, 2025  
-**Version**: 1.0.0  
+**Last Updated**: December 27, 2025  
+**Version**: 1.0.1  
 **License**: GPLv3  
 **For API details**: See [API.md](API.md)

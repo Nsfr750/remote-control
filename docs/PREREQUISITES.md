@@ -45,7 +45,6 @@ pip install PyQt6>=6.4.0
 pip install cryptography>=3.4.8
 pip install numpy>=1.21.0
 pip install wand>=0.6.6
-pip install pillow>=9.0.0
 pip install paramiko>=2.9.0
 ```
 
@@ -61,6 +60,9 @@ pip install win32ui>=304
 pip install win32con>=304
 pip install win32api>=304
 ```
+
+Additional Windows requirement for screen capture conversion:
+- ImageMagick (required by `wand`)
 
 #### Linux
 
@@ -137,6 +139,8 @@ sudo ufw allow out 5000/tcp
 #### Advanced Logging
 - **Disk Space**: Additional 100MB for detailed logs
 - **Tools**: Log viewing software (built-in viewer available)
+
+Project logs are stored in the `logs/` folder.
 
 #### File Transfer
 - **Antivirus**: Real-time scanning for transferred files
@@ -266,6 +270,6 @@ if __name__ == "__main__":
 
 ---
 
-**Last Updated**: December 26, 2025  
-**Version**: 1.0.0  
+**Last Updated**: December 27, 2025  
+**Version**: 1.0.1  
 **Supported Platforms**: Windows 10+, Ubuntu 20.04+

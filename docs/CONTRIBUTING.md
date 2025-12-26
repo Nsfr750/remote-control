@@ -302,6 +302,10 @@ What actually happened.
 
 **Additional Context**
 Any other relevant information, logs, or screenshots.
+
+If possible, attach relevant excerpts from:
+- `logs/server.log`
+- `logs/client_debug.log`
 ```
 
 ### Debug Information
@@ -415,5 +419,5 @@ Contributors are recognized in:
 
 Thank you for contributing to Remote Control! Your contributions help make this project better for everyone.
 
-**Last Updated**: December 26, 2025  
-**Version**: 1.0.0
+**Last Updated**: December 27, 2025  
+**Version**: 1.0.1

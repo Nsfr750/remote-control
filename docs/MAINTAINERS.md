@@ -254,7 +254,7 @@ Thanks to all who have helped maintain and improve this project:
 
 ---
 
-**Last Updated**: December 26, 2025  
-**Version**: 1.0.0  
+**Last Updated**: December 27, 2025  
+**Version**: 1.0.1  
 **Project**: Remote Control  
 **License**: GPLv3

@@ -6,10 +6,14 @@
 
 If you discover a security vulnerability in this project, please report it to our security team:
 
-- **Email**: [Info](mailto:info@tuxle.org)
+- **Email**: [Info](mailto:info@tuxxle.org)
 - **Subject**: [SECURITY] Vulnerability in Remote Control
 
 We will respond to your report within 48 hours and keep you updated on the progress.
+
+When reporting issues, include relevant excerpts from:
+- `logs/server.log`
+- `logs/client_debug.log`
 
 ## Security Updates
 
@@ -117,5 +121,5 @@ We are committed to providing regular security updates for this project. Here's 
 
 ---
 
-**Last Updated**: December 26, 2025  
+**Last Updated**: December 27, 2025  
 **Security Contact**: [Info](mailto:info@tuxxle.org)
