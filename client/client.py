@@ -144,16 +144,7 @@ class RemoteControlClient(QMainWindow):
         about_action = QAction(f"&About {self.windowTitle()}", self)
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
-        
-        # Version info
-        try:
-            version = get_version()
-            version_action = QAction(f"Version {version}", self)
-            version_action.setEnabled(False)
-            help_menu.addAction(version_action)
-        except Exception as e:
-            logger.warning(f"Could not load version info: {e}")
-        
+              
         # Add separator
         help_menu.addSeparator()
         
@@ -161,18 +152,6 @@ class RemoteControlClient(QMainWindow):
         sponsor_action = QAction("&Support this Project", self)
         sponsor_action.triggered.connect(self.show_sponsor)
         help_menu.addAction(sponsor_action)
-        
-        # Version info
-        try:
-            from struttura import version
-            version_text = f"Version: {version.__version__}"
-            if hasattr(version, 'VERSION'):
-                version_text = f"Version: {version.VERSION}"
-            version_action = QAction(version_text, self)
-            version_action.setEnabled(False)
-            help_menu.addAction(version_action)
-        except ImportError:
-            pass
     
     def show_documentation(self):
         """Open the documentation dialog."""
