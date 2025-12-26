@@ -182,6 +182,5 @@ cython_debug/
 /.windsurf
 users.json
 setup/clean_pycache.py
-setup/installer.nsi
 setup/release-text
 setup/TXT

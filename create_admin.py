@@ -55,7 +55,7 @@ def create_admin_user(username: str, password: str) -> None:
 
 if __name__ == '__main__':
     print("Create Admin User")
-    print("================")
+    print("=================")
     
     # Get username and password
     username = input("Enter username [admin]: ") or "admin"

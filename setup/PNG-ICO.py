@@ -9,7 +9,7 @@ def convert_png_to_ico(png_path, ico_path=None, sizes=None):
     Args:
         png_path (str): Path to the source PNG file
         ico_path (str, optional): Path to save the ICO file. If None, replaces .png with .ico
-        sizes (list, optional): List of icon sizes to include. Defaults to [16, 32, 48, 64, 128, 256]
+        sizes (list, optional): List of icon sizes to include. Defaults [16, 32, 48, 64, 128, 256]
     """
     if sizes is None:
         sizes = [16, 32, 48, 64, 128, 256]
