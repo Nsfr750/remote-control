@@ -791,11 +791,25 @@ class RemoteControlClient(QMainWindow):
             if hasattr(self, 'screen_label'):
                 logger.debug(f"Screen label size: {self.screen_label.size().width()}x{self.screen_label.size().height()}")
             
-            # Create QPixmap directly from image data
+            # Try multiple image formats
             pixmap = QPixmap()
+            
+            # First try PNG
             if not pixmap.loadFromData(image_data, "PNG"):
-                logger.error("Failed to load image from received data")
-                return
+                logger.debug("PNG format failed, trying JPEG")
+                # Try JPEG format
+                if not pixmap.loadFromData(image_data, "JPEG"):
+                    logger.debug("JPEG format failed, trying auto-detection")
+                    # Try without format specification
+                    if not pixmap.loadFromData(image_data):
+                        logger.error("Failed to load image from received data")
+                        # Debug: save first few bytes to check format
+                        logger.debug(f"First 20 bytes: {image_data[:20].hex()}")
+                        return
+                else:
+                    logger.debug("Loaded image as JPEG")
+            else:
+                logger.debug("Loaded image as PNG")
                 
             logger.debug(f"Pixmap size: {pixmap.size().width()}x{pixmap.size().height()}")
             self.current_screen = pixmap
