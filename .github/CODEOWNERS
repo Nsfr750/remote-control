@@ -1,0 +1,56 @@
+# CODEOWNERS file for Remote Control project
+# This file defines individuals or teams that are responsible for code in this repository.
+# Lines starting with '#' are comments and will be ignored.
+
+# Global owners - These owners have ownership of the entire repository.
+* @Nsfr750
+
+# Specific file/directory ownership
+
+# Core application files
+/src/ @Nsfr750
+/server/ @Nsfr750
+/client/ @Nsfr750
+/struttura/ @Nsfr750
+
+# Configuration and documentation
+/docs/ @Nsfr750
+/setup/ @Nsfr750
+*.md @Nsfr750
+*.yml @Nsfr750
+*.yaml @Nsfr750
+
+# Security and authentication
+/security/ @Nsfr750
+/auth/ @Nsfr750
+users.json @Nsfr750
+
+# Platform-specific code
+/server/platform/ @Nsfr750
+/server/screen/ @Nsfr750
+
+# Build and deployment
+/build/ @Nsfr750
+/deploy/ @Nsfr750
+Dockerfile* @Nsfr750
+*.dockerfile @Nsfr750
+
+# Tests
+/tests/ @Nsfr750
+test_*.py @Nsfr750
+*_test.py @Nsfr750
+
+# Configuration files
+*.config @Nsfr750
+*.ini @Nsfr750
+*.conf @Nsfr750
+requirements*.txt @Nsfr750
+
+# Version and release
+version.py @Nsfr750
+CHANGELOG.md @Nsfr750
+RELEASE.md @Nsfr750
+
+# Emergency fallback - no owner means no automatic assignment
+# This line should be last and matches everything not matched above
+# @Nsfr750
