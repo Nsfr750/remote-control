@@ -69,6 +69,12 @@ class RemoteControlServer:
         """Get the appropriate screen controller for the platform."""
         try:
             # Try to import screen controller
+            import sys
+            import os
+            # Add the server directory to Python path
+            server_dir = os.path.dirname(os.path.abspath(__file__))
+            if server_dir not in sys.path:
+                sys.path.insert(0, server_dir)
             from screen import ScreenController
             return ScreenController()
         except ImportError as e:
@@ -82,10 +88,10 @@ class RemoteControlServer:
         """Get the appropriate input controller for the platform."""
         try:
             if self.os_platform == 'windows':
-                from platform.windows.input import WindowsInputHandler as WindowsInputController
+                from platform_local.windows.input import WindowsInputHandler as WindowsInputController
                 return WindowsInputController()
             else:
-                from platform.linux.input import LinuxInputHandler as LinuxInputController
+                from platform_local.linux.input import LinuxInputHandler as LinuxInputController
                 return LinuxInputController()
         except ImportError as e:
             logger.warning(f"Input controller not available: {e}")

@@ -6,8 +6,16 @@ import win32gui
 import win32ui
 import win32con
 import win32api
-from wand.image import Image
 import io
+import sys
+import importlib
+
+# Ensure system platform module is loaded before wand
+if 'platform' in sys.modules:
+    del sys.modules['platform']
+platform = importlib.import_module('platform')
+
+from wand.image import Image
 
 def get_screens():
     """Get information about all connected screens."""
