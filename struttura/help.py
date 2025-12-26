@@ -111,18 +111,16 @@ class HelpDialog(QDialog):
         <h3>What's New in 1.0.1</h3>
         <h4>🚀 Added</h4>
         <ul>
-            <li>- Enhanced server GUI with user/password configuration fields</li>
-            <li>- Public IP detection in server configuration dialog</li>
-            <li>- Fixed platform import conflicts for better cross-platform compatibility</li>
-            <li>- Added user password update functionality</li>
-            <li>- Improved authentication error handling</li>
+            <li>- Centralized log files under the <b>logs/</b> folder</li>
+            <li>- Client menu: <b>Tools -&gt; View Logs</b> to inspect log files</li>
+            <li>- Application icon integration: <b>assets/icon.png</b> for client and server GUI</li>
+            <li>- Improved diagnostics and debug logging for authentication and screen capture</li>
         </ul>
         <h4>🚀 Fixed</h4>
         <ul>
-            <li>- Fixed AttributeError in server authentication (MessageType.ERROR vs AUTH_RESPONSE)</li>
-            <li>- Resolved platform module naming conflicts</li>
-            <li>- Fixed client authentication flow</li>
-            <li>- Improved error handling in screen and input controllers</li>
+            <li>- Authentication flow: standardized failures to return <b>AUTH_RESPONSE</b> instead of <b>ERROR</b></li>
+            <li>- Screen controller initialization issues on Windows caused by platform import conflicts</li>
+            <li>- General connection stability and error handling improvements</li>
         </ul>        
         """
         
@@ -160,7 +158,19 @@ class HelpDialog(QDialog):
         # Client message
         client_text = """
         <h2>Client Usage</h2>
-        <p>Set up the client to control remote computers.</p>
+        <p>Use the client to connect to a remote server and start remote screen viewing and control.</p>
+
+        <h3>Quick Start</h3>
+        <ol>
+            <li>Start the server on the remote machine.</li>
+            <li>Open the client and enter Host/Port.</li>
+            <li>Authenticate with your username/password.</li>
+        </ol>
+
+        <h3>Tools</h3>
+        <ul>
+            <li><b>Tools -&gt; View Logs</b>: opens the log viewer for files in the <b>logs/</b> folder.</li>
+        </ul>
         """
         
         text_browser = QTextBrowser()
@@ -178,7 +188,30 @@ class HelpDialog(QDialog):
         # Features message
         features_text = """
         <h2>Features</h2>
-        
+
+        <h3>Remote Screen</h3>
+        <ul>
+            <li>Real-time screen capture and streaming</li>
+            <li>Multi-monitor support (where available)</li>
+        </ul>
+
+        <h3>Remote Input</h3>
+        <ul>
+            <li>Mouse movement and clicks</li>
+            <li>Keyboard input</li>
+        </ul>
+
+        <h3>File Transfer</h3>
+        <ul>
+            <li>Upload and download files between client and server</li>
+        </ul>
+
+        <h3>Logging &amp; Diagnostics</h3>
+        <ul>
+            <li>Server logs: <b>logs/server.log</b></li>
+            <li>Client logs: <b>logs/client_debug.log</b></li>
+            <li>Built-in viewer: <b>Tools -&gt; View Logs</b></li>
+        </ul>
         """
         
         text_browser = QTextBrowser()
@@ -196,7 +229,24 @@ class HelpDialog(QDialog):
         # troubleshooting message
         troubleshooting_text = """
         <h2>Troubleshooting</h2>
-        
+
+        <h3>Authentication fails</h3>
+        <ul>
+            <li>Verify username/password are not empty.</li>
+            <li>Check <b>logs/server.log</b> and <b>logs/client_debug.log</b> for details.</li>
+        </ul>
+
+        <h3>No screen / "Screen controller not available"</h3>
+        <ul>
+            <li>Ensure the server is running on the target machine.</li>
+            <li>On Windows, confirm required dependencies (pywin32, wand/ImageMagick) are installed.</li>
+            <li>Open <b>Tools -&gt; View Logs</b> in the client to inspect recent errors.</li>
+        </ul>
+
+        <h3>Where are the logs?</h3>
+        <ul>
+            <li>All logs are stored in the <b>logs/</b> folder in the project directory.</li>
+        </ul>
         """
         
         text_browser = QTextBrowser()
@@ -231,6 +281,10 @@ class HelpDialog(QDialog):
             <h3>License</h3>
             <p>© Copyright 2024-2025 Nsfr750. All Rights Reserved</p>
             <p>Licensed under the GPL v3.0 License</p>
+
+            <h3>Resources</h3>
+            <p><b>Logs folder:</b> logs/</p>
+            <p><b>Application icon:</b> assets/icon.png</p>
             
             <p>
                 <a href="https://github.com/Nsfr750/remote-control">GitHub Repository</a> | 

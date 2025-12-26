@@ -17,6 +17,12 @@
 
 Welcome to the Remote Control application! This comprehensive guide will help you get started with the application and make the most of its features for remote desktop management and file transfer.
 
+## What's New in 1.0.1
+
+- Logs are stored in the project folder under `logs/`
+- The client includes a built-in log viewer: `Tools -> View Logs`
+- Improved authentication handling and Windows screen controller initialization
+
 ## System Requirements
 
 ### Windows
@@ -134,6 +140,9 @@ python -m client.client --host 192.168.1.4 --port 5000 --username admin
 - **Connection Status**: Shows current connection state
 - **Control Panel**: Access to settings and file transfer
 - **Fullscreen Button**: Toggle fullscreen mode
+
+### Tools Menu
+- **View Logs**: Open the log viewer to inspect `logs/server.log` and `logs/client_debug.log`
 
 ### Controls
 - **Mouse**: Click and drag to control remote mouse
@@ -260,9 +269,12 @@ Application configuration is stored in:
    - Check system resources
 
 ### Logs
-Application logs are stored in:
-- **Windows**: `%APPDATA%\remote-control\logs\`
-- **Linux**: `~/.local/share/remote-control/logs/`
+Application logs are stored in the project folder:
+- `logs/server.log`
+- `logs/client_debug.log`
+
+You can also open them from the client menu:
+- `Tools -> View Logs`
 
 ## Frequently Asked Questions
 

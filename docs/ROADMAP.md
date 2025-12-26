@@ -1,6 +1,7 @@
 # 🗺️ Project Roadmap
 
 ## Phase 1: Core Functionality (Q1 2026) - COMPLETED ✅
+
 - [x] Basic client-server communication
 - [x] Screen sharing with platform-specific implementations
 - [x] Remote input control (mouse and keyboard)
@@ -15,6 +16,7 @@
 - [x] **Cross-platform Build**: Separate client/server scripts
 
 ## Phase 2: Enhanced Features (Q2 2026) - IN PROGRESS 🚧
+
 - [x] Platform-specific input handling
 - [x] Enhanced error handling and logging
 - [x] **Linux Screen Capture**: Proper implementation using import/scrot
@@ -22,6 +24,11 @@
 - [x] **Fullscreen Exit**: ESC key functionality
 - [x] **Socket Error Handling**: Improved disconnect handling
 - [x] **Image Loading**: Multi-format support (PNG/JPEG)
+- [x] **Centralized Logs Folder**: Client/server logs saved under `logs/`
+- [x] **Log Viewer (Client)**: Tools -> View Logs
+- [x] **Application Icon**: Use `assets/icon.png` for client and server GUI
+- [x] **Auth Response Standardization**: Auth failures return `AUTH_RESPONSE` instead of `ERROR`
+- [x] **Windows Screen Controller Fix**: Resolved platform import conflicts impacting screen capture
 - [ ] Advanced security features
   - [ ] Two-factor authentication
   - [ ] End-to-end encryption
@@ -38,6 +45,7 @@
   - [x] Keyboard shortcuts (ESC for fullscreen)
 
 ## Phase 3: Enterprise Features (Q3 2026)
+
 - [ ] User management
 - [ ] Session recording
 - [ ] Audit logging
@@ -45,12 +53,14 @@
 - [ ] API for integration
 
 ## Phase 4: Advanced Capabilities (Q4 2026)
+
 - [ ] Mobile client
 - [ ] Voice/video chat
 - [ ] Automated testing
 - [ ] Plugin system
 
 ## Future Considerations
+
 - Cloud-based deployment
 - Mobile device management
 - IoT device support

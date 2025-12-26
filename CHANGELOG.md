@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 🚀 [1.0.1] - 2025-12-27
+
+### 🐛 Fixed
+- ✅ **Authentication Responses**: Standardized auth failures to return `AUTH_RESPONSE` (instead of `ERROR`) to avoid client-side parsing issues
+- 🖥️ **Screen Controller Availability**: Resolved platform import conflicts that prevented screen capture initialization on Windows
+
+### ✨ Added
+- 🧾 **Log Viewer (Client)**: Added **Tools -> View Logs** to inspect log files inside the `logs/` folder
+- 🗂️ **Centralized Logs Folder**: Server and client logs are now written under `logs/`
+- 🎨 **Application Icon**: Client and server GUI configuration dialog now use `assets/icon.png`
+
+### 🔄 Changed
+- 🧹 **Better Diagnostics**: Improved debug logging around authentication, screen capture, and connection lifecycle
+
 ## 🚀 [1.0.0] - 2025-12-26
 
 ### ✨ Added

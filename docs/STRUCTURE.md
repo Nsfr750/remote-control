@@ -1,6 +1,6 @@
 # 🏗️ Project Structure
 
-```
+```text
 remote_control/
 ├── client/                 # Client application
 │   ├── __init__.py         # Package initialization
@@ -16,6 +16,7 @@ remote_control/
 │   ├── server.py           # Main server logic
 │   ├── input.py            # Input controller interface
 │   ├── screen.py           # Screen controller interface
+│   ├── screen/             # Platform-specific screen capture (Windows/Linux)
 │   └── platform/           # Platform-specific implementations
 │       ├── windows/        # Windows-specific code
 │       │   ├── __init__.py
@@ -50,7 +51,11 @@ remote_control/
 │   └── USERGUIDE.md
 │
 ├── assets/                 # Application assets
-│   └── icon.ico            # Application icon
+│   └── icon.png            # Application icon
+
+├── logs/                   # Runtime logs
+│   ├── server.log
+│   └── client_debug.log
 │
 ├── lang/                   # Language support
 │   ├── language_manager.py

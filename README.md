@@ -13,6 +13,13 @@
   <img src="https://img.shields.io/badge/Status-Beta-yellow" alt="Status">
 </div>
 
+## 🆕 What’s New in 1.0.1
+
+- **Logs folder**: client and server logs are saved under `logs/`
+- **Log viewer**: in the client menu `Tools -> View Logs`
+- **App icon**: client and server GUI use `assets/icon.png`
+- **Stability fixes**: improved authentication handling and screen controller initialization on Windows
+
 ## ✨ Features
 
 ### 🖥️ Remote Control
@@ -125,7 +132,7 @@ Detailed requirements can be found in `requirements.txt`. Key dependencies inclu
 
 - PyQt6 for the GUI
 - cryptography for secure communications
-- pillow for image processing
+- wand for image processing
 - paramiko for SSH capabilities
    ```
 
