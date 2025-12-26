@@ -21,11 +21,18 @@ from common.security import SecurityManager
 from common.file_transfer import FileTransfer, FileTransferMessage
 
 # Configure logging
+import os
+from pathlib import Path
+
+# Ensure logs directory exists
+logs_dir = Path('../logs')
+logs_dir.mkdir(exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('server.log'),
+        logging.FileHandler(logs_dir / 'server.log'),
         logging.StreamHandler()
     ]
 )
@@ -667,13 +674,18 @@ def main() -> None:
         try:
             from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QDialogButtonBox
             from PyQt6.QtCore import Qt
-            from PyQt6.QtGui import QFont
+            from PyQt6.QtGui import QFont, QIcon
             
             class ServerConfigDialog(QDialog):
                 def __init__(self, parent=None):
                     super().__init__(parent)
                     self.setWindowTitle("Remote Control Server - Configuration")
                     self.setFixedSize(450, 300)
+                    
+                    # Set application icon
+                    icon_path = Path(__file__).parent.parent / 'assets' / 'icon.png'
+                    if icon_path.exists():
+                        self.setWindowIcon(QIcon(str(icon_path)))
                     
                     layout = QVBoxLayout()
                     

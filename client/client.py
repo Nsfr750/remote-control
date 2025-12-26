@@ -23,14 +23,8 @@ logger = logging.getLogger(__name__)
 logger.debug("Starting Remote Control Client")
 
 # Qt imports
-from PyQt6.QtCore import (
-    Qt, QTimer, QMetaObject, Q_ARG, QUrl, QRect, QPoint, QSize,
-    QSettings, pyqtSignal, QObject, pyqtSlot
-)
-from PyQt6.QtGui import (
-    QPixmap, QDesktopServices, QAction, QIcon, QMouseEvent,
-    QKeyEvent, QPainter, QPen, QColor, QCursor
-)
+from PyQt6.QtCore import Qt, QUrl, QSize
+from PyQt6.QtGui import QFont, QTextCursor, QIcon, QPixmap, QDesktopServices, QAction, QMouseEvent, QKeyEvent, QPainter, QPen, QColor, QCursor
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QTabWidget, QWidget, QMessageBox, QFileDialog, QSystemTrayIcon, QMenu,
@@ -53,6 +47,7 @@ from struttura.about import show_about_dialog
 from struttura.help import show_help_dialog
 from struttura.sponsor import show_sponsor_dialog
 from struttura.version import get_version
+from struttura.view_log import show_log_viewer
 
 from common.protocol import Message, MessageType
 from common.security import SecurityManager
@@ -60,12 +55,19 @@ from common.file_transfer import FileTransfer
 from common.utils import setup_logger
 
 # Configure logging
+import os
+from pathlib import Path
+
+# Ensure logs directory exists
+logs_dir = Path('../logs')
+logs_dir.mkdir(exist_ok=True)
+
 logging.basicConfig(
     level=logging.DEBUG,  # Set to DEBUG to capture all messages
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('client_debug.log', mode='w')
+        logging.FileHandler(logs_dir / 'client_debug.log', mode='w')
     ]
 )
 
@@ -137,6 +139,15 @@ class RemoteControlClient(QMainWindow):
         exit_action.triggered.connect(self.close_application)
         file_menu.addAction(exit_action)
         
+        # Tools menu
+        tools_menu = menubar.addMenu("&Tools")
+        
+        # Log viewer action
+        log_viewer_action = QAction("&View Logs", self)
+        log_viewer_action.setShortcut("Ctrl+L")  # Add Ctrl+L shortcut for log viewer
+        log_viewer_action.triggered.connect(self.show_log_viewer)
+        tools_menu.addAction(log_viewer_action)
+        
         # Help menu
         help_menu = menubar.addMenu("&Help")
         
@@ -191,6 +202,14 @@ class RemoteControlClient(QMainWindow):
                                  "Thank you for considering to sponsor this project!\n\n"
                                  "Your support helps maintain and improve this software.")
     
+    def show_log_viewer(self):
+        """Show the Log Viewer dialog."""
+        try:
+            show_log_viewer(self)
+        except Exception as e:
+            logger.error(f"Error showing log viewer: {e}")
+            QMessageBox.critical(self, "Error", "Could not load log viewer.")
+    
     def close_application(self):
         """Handle application exit from menu."""
         logger.info("Application exit requested from menu")
@@ -200,6 +219,11 @@ class RemoteControlClient(QMainWindow):
         """Initialize the user interface."""
         self.setWindowTitle("Remote Control Client")
         self.setMinimumSize(800, 600)
+        
+        # Set application icon
+        icon_path = Path(__file__).parent.parent / 'assets' / 'icon.png'
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
         
         # Create menu bar
         self.create_menu_bar()
