@@ -23,7 +23,18 @@ logger = logging.getLogger(__name__)
 logger.debug("Starting Remote Control Client")
 
 # Qt imports
-from PyQt6.QtCore import Qt, QUrl, QSize
+from PyQt6.QtCore import (
+    Qt,
+    QUrl,
+    QSize,
+    QObject,
+    pyqtSignal,
+    pyqtSlot,
+    QSettings,
+    QTimer,
+    QMetaObject,
+    Q_ARG,
+)
 from PyQt6.QtGui import QFont, QTextCursor, QIcon, QPixmap, QDesktopServices, QAction, QMouseEvent, QKeyEvent, QPainter, QPen, QColor, QCursor
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
@@ -59,8 +70,8 @@ import os
 from pathlib import Path
 
 # Ensure logs directory exists
-logs_dir = Path('../logs')
-logs_dir.mkdir(exist_ok=True)
+logs_dir = Path(__file__).resolve().parent.parent / 'logs'
+logs_dir.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
     level=logging.DEBUG,  # Set to DEBUG to capture all messages

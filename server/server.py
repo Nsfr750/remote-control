@@ -25,14 +25,14 @@ import os
 from pathlib import Path
 
 # Ensure logs directory exists
-logs_dir = Path('../logs')
-logs_dir.mkdir(exist_ok=True)
+logs_dir = Path(__file__).resolve().parent.parent / 'logs'
+logs_dir.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(logs_dir / 'server.log'),
+        logging.FileHandler(logs_dir / 'server.log', mode='w'),
         logging.StreamHandler()
     ]
 )
@@ -75,30 +75,27 @@ class RemoteControlServer:
     def _get_screen_controller(self):
         """Get the appropriate screen controller for the platform."""
         try:
-            # Try to import screen controller
-            import sys
-            import os
-            # Add the server directory to Python path
-            server_dir = os.path.dirname(os.path.abspath(__file__))
-            if server_dir not in sys.path:
-                sys.path.insert(0, server_dir)
-            from screen import ScreenController
+            # Import explicitly from the server.screen *package*.
+            # This avoids collision with server/screen.py (module) and ensures
+            # platform-specific implementations under server/screen/ are used.
+            from server.screen import ScreenController
+
             return ScreenController()
         except ImportError as e:
             logger.warning(f"Screen controller not available: {e}")
             return None
         except Exception as e:
-            logger.error(f"Failed to load screen controller: {e}")
+            logger.error(f"Failed to load screen controller: {e}", exc_info=True)
             return None
 
     def _get_input_controller(self):
         """Get the appropriate input controller for the platform."""
         try:
             if self.os_platform == 'windows':
-                from platform_local.windows.input import WindowsInputHandler as WindowsInputController
+                from server.platform_local.windows.input import WindowsInputHandler as WindowsInputController
                 return WindowsInputController()
             else:
-                from platform_local.linux.input import LinuxInputHandler as LinuxInputController
+                from server.platform_local.linux.input import LinuxInputHandler as LinuxInputController
                 return LinuxInputController()
         except ImportError as e:
             logger.warning(f"Input controller not available: {e}")
@@ -151,27 +148,39 @@ class RemoteControlServer:
         client_id = f"{client_address[0]}:{client_address[1]}"
         authenticated = False
         username = None
+
+        def _recv_exact(sock: socket.socket, nbytes: int) -> Optional[bytes]:
+            """Receive exactly nbytes from the socket.
+
+            Returns None if the connection is closed before the requested bytes are received.
+            """
+            chunks: list[bytes] = []
+            received = 0
+            while received < nbytes:
+                chunk = sock.recv(nbytes - received)
+                if not chunk:
+                    return None
+                chunks.append(chunk)
+                received += len(chunk)
+            return b"".join(chunks)
         
         try:
             while self.running:
                 # Receive message header (8 bytes: 4 for type, 4 for length)
-                header = client_socket.recv(8)
-                if not header:
+                header = _recv_exact(client_socket, 8)
+                if header is None:
                     break
                     
                 # Parse message
                 msg_type = int.from_bytes(header[:4], byteorder='big')
                 data_len = int.from_bytes(header[4:8], byteorder='big')
                 
-                # Receive message data
-                data = b''
-                while len(data) < data_len:
-                    chunk = client_socket.recv(min(4096, data_len - len(data)))
-                    if not chunk:
-                        break
-                    data += chunk
-                
-                if len(data) != data_len:
+                if data_len < 0 or data_len > 10 * 1024 * 1024:
+                    logger.warning(f"Invalid message length from {client_id}: {data_len}")
+                    break
+
+                data = _recv_exact(client_socket, data_len)
+                if data is None:
                     logger.warning(f"Incomplete message from {client_id}")
                     break
                 
@@ -200,7 +209,7 @@ class RemoteControlServer:
         except ConnectionResetError:
             logger.info(f"Client {client_id} disconnected unexpectedly")
         except Exception as e:
-            logger.error(f"Error handling client {client_id}: {e}")
+            logger.error(f"Error handling client {client_id}: {e}", exc_info=True)
         finally:
             client_socket.close()
             if username in self.clients:
