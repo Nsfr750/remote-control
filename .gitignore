@@ -185,3 +185,4 @@ setup/clean_pycache.py
 setup/release-text
 setup/TXT
 setup/firma.bat
+setup/firma.py
