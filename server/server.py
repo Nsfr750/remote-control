@@ -29,7 +29,7 @@ logs_dir = Path(__file__).resolve().parent.parent / 'logs'
 logs_dir.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Set to DEBUG to capture all messages
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(logs_dir / 'server.log', mode='w'),
@@ -169,6 +169,7 @@ class RemoteControlServer:
                 # Receive message header (8 bytes: 4 for type, 4 for length)
                 header = _recv_exact(client_socket, 8)
                 if header is None:
+                    logger.info(f"Client {client_id} disconnected (no header)")
                     break
                     
                 # Parse message
@@ -181,8 +182,10 @@ class RemoteControlServer:
 
                 data = _recv_exact(client_socket, data_len)
                 if data is None:
-                    logger.warning(f"Incomplete message from {client_id}")
+                    logger.info(f"Client {client_id} disconnected (incomplete payload, expected {data_len} bytes)")
                     break
+                
+                logger.debug(f"Received from {client_id}: msg_type={msg_type}, data_len={data_len}")
                 
                 # Process message
                 if not authenticated and msg_type != MessageType.AUTH.value:
@@ -205,6 +208,7 @@ class RemoteControlServer:
                             logger.error(f"Error parsing auth response: {e}")
                     
                     self._send_message(client_socket, msg_type, response_data)
+                    logger.debug(f"Sent response to {client_id}: msg_type={msg_type.name}, size={len(response_data)}")
                 
         except ConnectionResetError:
             logger.info(f"Client {client_id} disconnected unexpectedly")
@@ -260,9 +264,11 @@ class RemoteControlServer:
             header += len(data).to_bytes(4, byteorder='big')
             
             # Send header + data
-            client_socket.sendall(header + data)
+            full_msg = header + data
+            client_socket.sendall(full_msg)
+            logger.debug(f"Sent message: type={msg_type.name}, total_size={len(full_msg)}")
         except Exception as e:
-            logger.error(f"Error sending message: {e}")
+            logger.error(f"Error sending message (type={msg_type.name}, size={len(data)}): {e}", exc_info=True)
             raise
 
     def _handle_info(self) -> Tuple[MessageType, bytes]:
