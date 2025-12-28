@@ -19,11 +19,12 @@ class MessageType(Enum):
     FILE_TRANSFER = 6
     CLIPBOARD_UPDATE = 7
     SYSTEM_COMMAND = 8
-    ERROR = 9
-    INFO = 10
-    DISCONNECT = 11
-    PING = 12        # Keep-alive ping
-    PONG = 13        # Keep-alive pong response
+    SUCCESS = 9
+    ERROR = 10
+    INFO = 11
+    DISCONNECT = 12
+    PING = 13        # Keep-alive ping
+    PONG = 14        # Keep-alive pong response
 
 class Message:
     """Message class for client-server communication."""

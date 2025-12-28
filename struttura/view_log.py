@@ -157,7 +157,9 @@ class LogViewerDialog(QDialog):
 
     def load_available_logs(self):
         """Load available log files from the logs directory."""
-        logs_dir = Path('../logs')
+        # Use absolute path to logs directory
+        current_dir = Path(__file__).parent
+        logs_dir = current_dir.parent / 'logs'
         if not logs_dir.exists():
             self.status_label.setText("Logs directory not found")
             return
@@ -189,7 +191,9 @@ class LogViewerDialog(QDialog):
             return
         
         # Get the full path
-        logs_dir = Path('../logs')
+        # Use absolute path to logs directory
+        current_dir = Path(__file__).parent
+        logs_dir = current_dir.parent / 'logs'
         log_file = logs_dir / filename
         
         if not log_file.exists():

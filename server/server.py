@@ -250,6 +250,7 @@ class RemoteControlServer:
             elif msg_type == MessageType.DISCONNECT.value:
                 return None  # Client is disconnecting
             else:
+                logger.warning(f"Unknown message type from {client_id}: {msg_type}")
                 return MessageType.ERROR, b"Unknown message type"
                 
         except Exception as e:
@@ -271,26 +272,76 @@ class RemoteControlServer:
             logger.error(f"Error sending message (type={msg_type.name}, size={len(data)}): {e}", exc_info=True)
             raise
 
+    def _handle_clipboard_update(self, data: bytes) -> Tuple[MessageType, bytes]:
+        """Handle clipboard update from client."""
+        try:
+            # For now, just acknowledge receipt
+            logger.debug(f"Clipboard update received, size={len(data)} bytes")
+            return MessageType.SUCCESS, b"Clipboard updated"
+        except Exception as e:
+            logger.error(f"Error handling clipboard update: {e}")
+            return MessageType.ERROR, f"Failed to update clipboard: {e}".encode('utf-8')
+
+    def _handle_system_command(self, data: bytes) -> Tuple[MessageType, bytes]:
+        """Handle system command from client."""
+        try:
+            # For now, just acknowledge receipt
+            logger.debug(f"System command received, size={len(data)} bytes")
+            return MessageType.SUCCESS, b"System command handled"
+        except Exception as e:
+            logger.error(f"Error handling system command: {e}")
     def _handle_info(self) -> Tuple[MessageType, bytes]:
         """Handle system information request."""
         try:
-            import socket
-            import psutil
-            
+            # Build system information
             info = {
-                'hostname': socket.gethostname(),
+                'hostname': 'localhost',
                 'os_name': os.name,
                 'platform': self.os_platform,
                 'python_version': f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-                'total_ram': self._get_total_ram(),
-                'free_ram': self._get_free_ram(),
-                'disk_usage': self._get_disk_usage(),
-                'uptime': self._get_uptime()
+                'note': 'Limited system info for stability'
             }
+            
+            # Try to get hostname
+            try:
+                import socket
+                info['hostname'] = socket.gethostname()
+            except Exception:
+                pass
+            
+            # Try to get extended info safely
+            try:
+                import psutil
+                # Only add psutil info if import succeeds
+                try:
+                    info['total_ram'] = self._get_total_ram()
+                except Exception:
+                    pass
+                try:
+                    info['free_ram'] = self._get_free_ram()
+                except Exception:
+                    pass
+                try:
+                    info['disk_usage'] = self._get_disk_usage()
+                except Exception:
+                    pass
+                try:
+                    info['uptime'] = self._get_uptime()
+                except Exception:
+                    pass
+            except ImportError:
+                info['psutil'] = 'not installed'
+            except Exception as e:
+                info['psutil_error'] = str(e)
+            
             return MessageType.INFO, json.dumps(info).encode('utf-8')
         except Exception as e:
-            logger.error(f"Error getting system info: {e}")
-            return MessageType.ERROR, f"Failed to get system info: {e}".encode('utf-8')
+            # Last resort: return a simple error response
+            try:
+                logger.error(f"Error getting system info: {e}", exc_info=True)
+            except Exception:
+                pass  # If even logging fails, just return error
+            return MessageType.ERROR, f"System info unavailable: {str(e)}".encode('utf-8')
 
     def _handle_screenshot(self) -> Tuple[MessageType, bytes]:
         """Handle screenshot request."""

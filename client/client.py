@@ -27,6 +27,8 @@ from PyQt6.QtCore import (
     Qt,
     QUrl,
     QSize,
+    QPoint,
+    QRect,
     QObject,
     pyqtSignal,
     pyqtSlot,
@@ -73,14 +75,25 @@ from pathlib import Path
 logs_dir = Path(__file__).resolve().parent.parent / 'logs'
 logs_dir.mkdir(parents=True, exist_ok=True)
 
-logging.basicConfig(
-    level=logging.DEBUG,  # Set to DEBUG to capture all messages
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(logs_dir / 'client_debug.log', mode='w')
-    ]
-)
+# Create file handler explicitly
+file_handler = logging.FileHandler(logs_dir / 'client_debug.log', mode='w')
+file_handler.setLevel(logging.DEBUG)
+
+# Create stream handler
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+
+# Configure root logger
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+root_logger.handlers.clear()  # Remove existing handlers
+root_logger.addHandler(file_handler)
+root_logger.addHandler(stream_handler)
+
+# Set format
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+stream_handler.setFormatter(formatter)
 
 # Set higher log level for PIL to reduce noise
 logging.getLogger('PIL').setLevel(logging.WARNING)
@@ -432,8 +445,9 @@ class RemoteControlClient(QMainWindow):
             
             self.connect_to_server()
         else:
-            # If user cancels, show the dialog again
-            QTimer.singleShot(0, self.show_connection_dialog)
+            # If user cancels, close the application
+            logger.info("User cancelled connection. Closing application.")
+            self.close()
     
     def load_credentials(self):
         """Load saved credentials from settings."""
@@ -889,21 +903,96 @@ class RemoteControlClient(QMainWindow):
     def update_system_info(self, data: bytes):
         """Update the system info tab with received data."""
         try:
-            info = json.loads(data.decode('utf-8'))
+            # Try to parse as JSON first
+            try:
+                info = json.loads(data.decode('utf-8'))
+            except json.JSONDecodeError:
+                # If not JSON, treat as simple text response
+                info_text = f"""
+                <html>
+                <head>
+                    <style>
+                        body {{ 
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                            margin: 20px; 
+                            background-color: #f8f9fa;
+                            color: #2c3e50;
+                        }}
+                        h3 {{ 
+                            color: #1a73e8; 
+                            border-bottom: 2px solid #e8eaed; 
+                            padding-bottom: 10px; 
+                            margin-bottom: 20px;
+                        }}
+                        .response {{ 
+                            background-color: #e8f0fe; 
+                            color: #1967d2; 
+                            padding: 15px; 
+                            border-radius: 8px; 
+                            border-left: 4px solid #1a73e8;
+                            font-style: italic; 
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <h3>System Information</h3>
+                    <div class="response">Server response: {data.decode('utf-8')}</div>
+                </body>
+                </html>
+                """
+                self.info_text.setText(info_text)
+                return
+            
+            # Original JSON processing
             info_text = """
             <html>
             <head>
                 <style>
-                    body { font-family: Arial, sans-serif; margin: 15px; }
-                    h3 { color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-                    .section { margin-bottom: 15px; }
-                    .section-title { 
-                        color: #3498db; 
-                        font-weight: bold; 
-                        margin: 10px 0 5px 0;
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        margin: 20px; 
+                        background-color: #f8f9fa;
+                        color: #2c3e50;
                     }
-                    .info-item { margin: 3px 0; }
-                    .info-label { font-weight: bold; }
+                    h3 { 
+                        color: #1a73e8; 
+                        border-bottom: 2px solid #e8eaed; 
+                        padding-bottom: 10px; 
+                        margin-bottom: 20px;
+                    }
+                    .section { 
+                        margin-bottom: 20px; 
+                        background-color: white;
+                        border-radius: 8px;
+                        padding: 15px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    }
+                    .section-title { 
+                        color: #1a73e8; 
+                        font-weight: bold; 
+                        margin: 0 0 10px 0;
+                        font-size: 16px;
+                        border-bottom: 1px solid #e8eaed;
+                        padding-bottom: 8px;
+                    }
+                    .info-item { 
+                        margin: 8px 0; 
+                        padding: 4px 0;
+                        border-bottom: 1px solid #f1f3f4;
+                    }
+                    .info-item:last-child {
+                        border-bottom: none;
+                    }
+                    .info-label { 
+                        font-weight: 600; 
+                        color: #5f6368;
+                        display: inline-block;
+                        min-width: 120px;
+                    }
+                    .info-value {
+                        color: #202124;
+                        font-weight: 400;
+                    }
                 </style>
             </head>
             <body>
@@ -918,12 +1007,12 @@ class RemoteControlClient(QMainWindow):
                     for key, value in content.items():
                         if isinstance(value, (dict, list)):
                             value = json.dumps(value, indent=2)
-                        info_text += f'<div class="info-item"><span class="info-label">{key.replace("_", " ").title()}:</span> {value}</div>\n'
+                        info_text += f'<div class="info-item"><span class="info-label">{key.replace("_", " ").title()}:</span> <span class="info-value">{value}</span></div>\n'
                 elif isinstance(content, list):
                     for item in content:
                         info_text += f'<div class="info-item">• {str(item)}</div>\n'
                 else:
-                    info_text += f'<div class="info-item">{str(content)}</div>\n'
+                    info_text += f'<div class="info-item"><span class="info-value">{str(content)}</span></div>\n'
                 info_text += '</div>\n'
             info_text += """
             </body>

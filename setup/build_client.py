@@ -34,6 +34,7 @@ def build():
         sys.executable, "-m", "nuitka",
         f"--output-dir={DIST_DIR}",
         "--onefile", "--standalone",
+        "--jobs=4",
         f"--output-filename=RemoteControlClient.exe",
         "--windows-console-mode=disable",
         f"--windows-icon-from-ico={BASE_DIR / 'assets' / 'icon.ico'}",
@@ -48,9 +49,11 @@ def build():
         "--nofollow-import-to=PyQt6.QtWebEngine",
         "--nofollow-import-to=PyQt6.QtWebEngineWidgets",
         "--nofollow-import-to=ssl",
+        # Include data directories
+        "--include-data-dir=assets=assets",
         # Include data files with proper target filenames
         "--include-data-files=README.md=README.md",
-        "--include-data-files=LICENSE=LICENSE",
+        "--include-data-files=LICENSE=LICENSE.txt",
         "--include-data-files=CHANGELOG.md=CHANGELOG.md",
         # Additional metadata
         f"--company-name={COMPANY}",
