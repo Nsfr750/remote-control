@@ -1,6 +1,6 @@
 # 🗺️ Project Roadmap
 
-## Phase 1: Core Functionality (Q1 2026) - COMPLETED ✅
+## Phase 1: Core Functionality (Q4 2025) - COMPLETED ✅
 
 - [x] Basic client-server communication
 - [x] Screen sharing with platform-specific implementations
@@ -15,7 +15,7 @@
 - [x] **Code Signing**: Digital certificate integration
 - [x] **Cross-platform Build**: Separate client/server scripts
 
-## Phase 2: Enhanced Features (Q2 2026) - IN PROGRESS 🚧
+## Phase 2: Enhanced Features (Q1 2026) - IN PROGRESS 🚧
 
 - [x] Platform-specific input handling
 - [x] Enhanced error handling and logging
@@ -41,7 +41,6 @@
   - [ ] Caching mechanisms
 - [ ] User interface enhancements
   - [ ] Dark/light theme
-  - [ ] Customizable layouts
   - [x] Keyboard shortcuts (ESC for fullscreen)
 
 ## Phase 3: Enterprise Features (Q3 2026)
@@ -51,17 +50,3 @@
 - [ ] Audit logging
 - [ ] Centralized management console
 - [ ] API for integration
-
-## Phase 4: Advanced Capabilities (Q4 2026)
-
-- [ ] Mobile client
-- [ ] Voice/video chat
-- [ ] Automated testing
-- [ ] Plugin system
-
-## Future Considerations
-
-- Cloud-based deployment
-- Mobile device management
-- IoT device support
-- AI-assisted troubleshooting
